@@ -1,13 +1,302 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Clínica Synergy</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #abb4d9 0%, #354385 70%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+      width: 900px;
+      max-width: 95%;
+      display: flex;
+    }
+
+    .login-left {
+      flex: 1;
+      background: linear-gradient(100deg, #2d3d87 0%, #e8e8e8 170%);
+      padding: 60px;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .login-left h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .login-left p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+
+    .login-right {
+      flex: 1;
+      padding: 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .login-right h2 {
+      color: rgb(57, 82, 128);
+      margin-bottom: 0.5rem;
+      font-size: 2rem;
+    }
+
+    .login-right .subtitle {
+      color: #7f8c8d;
+      margin-bottom: 2rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #2c3e50;
+      font-weight: 500;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.3s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 14px;
+      background: rgb(57, 82, 128);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-login:active {
+      transform: translateY(0);
+    }
+
+    .alert {
+      padding: 12px 15px;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .alert-error {
+      background-color: #fee;
+      color: #c33;
+      border: 1px solid #fcc;
+    }
+
+    .alert-success {
+      background-color: #efe;
+      color: #3c3;
+      border: 1px solid #cfc;
+    }
+
+    @media (max-width: 768px) {
+      .login-container {
+        flex-direction: column;
+      }
+
+      .login-left {
+        padding: 40px;
+      }
+
+      .login-right {
+        padding: 40px;
+      }
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-left">
+      <img 
+        src="logo_synergy transparente_blanco.png" 
+        alt="Synergy Logo" 
+        style="width: 120%; max-width: 350px; margin: 0 auto; display: block;"
+      >
+    </div>
+
+    <div class="login-right">
+      <h2>Iniciar Sesión</h2>
+      <p class="subtitle">Ingresa tus credenciales</p>
+
+      <div id="alert" class="alert"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="correo">Correo Electrónico</label>
+          <input 
+            type="email" 
+            id="correo" 
+            name="correo" 
+            placeholder="usuario@clinica.com"
+            required
+            autocomplete="email"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="contraseña">Contraseña</label>
+          <input 
+            type="password" 
+            id="contraseña" 
+            name="contraseña" 
+            placeholder="••••••••"
+            required
+            autocomplete="current-password"
+          >
+        </div>
+
+        <button type="submit" class="btn-login" id="btnLogin">
+          Iniciar Sesión
+        </button>
+
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000/api';
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const correo = document.getElementById('correo').value;
+      const contraseña = document.getElementById('contraseña').value;
+      const btnLogin = document.getElementById('btnLogin');
+      const loading = document.getElementById('loading');
+      const alert = document.getElementById('alert');
+
+      // Limpiar alertas previas
+      alert.style.display = 'none';
+
+      // Mostrar loading
+      btnLogin.disabled = true;
+      btnLogin.textContent = 'Iniciando...';
+      loading.style.display = 'block';
+
+      try {
+        const response = await fetch(`${API_URL}/auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ correo, contraseña })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          // Guardar información del empleado
+          localStorage.setItem('empleado', JSON.stringify(data.empleado));
+          localStorage.setItem('permisos', JSON.stringify(data.permisos));
+          localStorage.setItem('isLoggedIn', 'true');
+
+          // Mostrar mensaje de éxito
+          alert.className = 'alert alert-success';
+          alert.textContent = '¡Bienvenido! Redirigiendo...';
+          alert.style.display = 'block';
+
+          // Redirigir al dashboard
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 1000);
+        } else {
+          // Mostrar error
+          alert.className = 'alert alert-error';
+          alert.textContent = data.message || 'Credenciales incorrectas';
+          alert.style.display = 'block';
+
+          btnLogin.disabled = false;
+          btnLogin.textContent = 'Iniciar Sesión';
+          loading.style.display = 'none';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert.className = 'alert alert-error';
+        alert.textContent = 'Error de conexión con el servidor';
+        alert.style.display = 'block';
+
+        btnLogin.disabled = false;
+        btnLogin.textContent = 'Iniciar Sesión';
+        loading.style.display = 'none';
+      }
+    });
+
+    // Si ya está logueado, redirigir
+    if (localStorage.getItem('isLoggedIn') === 'true') {
+      window.location.href = 'dashboard.html';
+    }
+  </script>
+</body>
 </html>

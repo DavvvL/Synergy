@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cirugías - Clínica Synergy</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .estado-badge {
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .estado-programada { background: #3498db; color: white; }
+    .estado-en-proceso { background: #f39c12; color: white; }
+    .estado-completada { background: #27ae60; color: white; }
+    .estado-cancelada { background: #e74c3c; color: white; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <img 
+        src="logo_synergy transparente_blanco.png" 
+        alt="Synergy Logo" 
+        style="width: 40%; max-width: 350px; margin: 0 auto; display: block;"
+      >
+    </div>
+    <div class="navbar-menu">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="empleados.html" id="nav-empleados">Empleados</a>
+      <a href="pacientes.html" id="nav-pacientes">Pacientes</a>
+      <a href="cirugias.html" class="active">Cirugías</a>
+      <a href="inventario.html" id="nav-inventario">Inventario</a>
+    </div>
+    <div class="navbar-user">
+      <span id="userName"></span>
+      <span id="userRole"></span>
+      <button onclick="cerrarSesion()">Cerrar Sesión</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-header">
+      <h2>🔬 Gestión de Cirugías</h2>
+      <button class="btn-primary" onclick="mostrarFormularioCrear()">+ Nueva Cirugía</button>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Paciente</th>
+            <th>Fecha Inicio</th>
+            <th>Quirófano</th>
+            <th>Equipo</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="cirugias-tbody">
+          <tr><td colspan="7" class="text-center">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Nueva Cirugía</h3>
+        <span class="close" onclick="cerrarModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="cirugia-form">
+          <input type="hidden" id="id_cirujia">
+
+          <div class="form-group">
+            <label>Paciente *</label>
+            <select id="id_paciente" required>
+              <option value="">Cargando...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Quirófano *</label>
+            <select id="id_quirofano" required>
+              <option value="">Cargando...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Tipo de Cirugía *</label>
+            <select id="id_tipo_cirujia" required>
+              <option value="">Cargando...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Equipo *</label>
+            <select id="id_equipo" required>
+              <option value="">Cargando...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Fecha y Hora de Inicio *</label>
+            <input type="datetime-local" id="fecha_inicio" required>
+          </div>
+
+          <div class="form-group">
+            <label>Motivo *</label>
+            <input type="text" id="motivo" required maxlength="60">
+          </div>
+
+          <div class="form-group">
+            <label>Descripción</label>
+            <textarea id="descripcion" maxlength="255" rows="3"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Estado *</label>
+            <select id="estado" required>
+              <option value="programada">Programada</option>
+              <option value="en-proceso">En Proceso</option>
+              <option value="completada">Completada</option>
+              <option value="cancelada">Cancelada</option>
+            </select>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" onclick="cerrarModal()">Cancelar</button>
+            <button type="submit">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/permisos.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    /*verificarSesion();
+    if (!PermisosManager.tienePermiso('cirugias')) {
+      alert('No tienes permisos para acceder a esta página');
+      window.location.href = 'dashboard.html';
+    }*/
+
+    PermisosManager.aplicarPermisosNavbar();
+    PermisosManager.mostrarInfoUsuario();
+
+    let cirugias = [];
+    let pacientes = [];
+    let quirofanos = [];
+    let tiposCirugia = [];
+    let equipos = [];
+    let modoEdicion = false;
+
+    async function cargarDatos() {
+      await Promise.all([
+        cargarCirugias(),
+        cargarPacientes(),
+        cargarQuirofanos(),
+        cargarTiposCirugia(),
+        cargarEquipos()
+      ]);
+    }
+
+    async function cargarCirugias() {
+      cirugias = await CirugiasAPI.obtenerTodas();
+      if (!cirugias) return;
+      mostrarCirugias();
+    }
+
+    async function cargarPacientes() {
+      pacientes = await PacientesAPI.obtenerTodos();
+      if (!pacientes) return;
+      const select = document.getElementById('id_paciente');
+      select.innerHTML = '<option value="">Seleccionar paciente...</option>' +
+        pacientes.map(p => `<option value="${p.id_paciente}">${p.nombre} ${p.paterno} ${p.materno || ''}</option>`).join('');
+    }
+
+    async function cargarQuirofanos() {
+      quirofanos = await CirugiasAPI.obtenerQuirofanos();
+      if (!quirofanos) return;
+      const select = document.getElementById('id_quirofano');
+      select.innerHTML = '<option value="">Seleccionar quirófano...</option>' +
+        quirofanos.map(q => `<option value="${q.id_quirofano}">${q.nombre}</option>`).join('');
+    }
+
+    async function cargarTiposCirugia() {
+      tiposCirugia = await CirugiasAPI.obtenerTipos();
+      if (!tiposCirugia) return;
+      const select = document.getElementById('id_tipo_cirujia');
+      select.innerHTML = '<option value="">Seleccionar tipo...</option>' +
+        tiposCirugia.map(t => `<option value="${t.id_tipo_cirujia}">${t.nombre}</option>`).join('');
+    }
+
+    async function cargarEquipos() {
+      equipos = await EmpleadosAPI.obtenerEquipos();
+      if (!equipos) return;
+      const select = document.getElementById('id_equipo');
+      select.innerHTML = '<option value="">Seleccionar equipo...</option>' +
+        equipos.map(e => `<option value="${e.id_equipo}">${e.nombre_equipo}</option>`).join('');
+    }
+
+    function mostrarCirugias() {
+      const tbody = document.getElementById('cirugias-tbody');
+      
+      if (cirugias.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center">No hay cirugías registradas</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = cirugias.map(c => {
+        const fecha = new Date(c.fecha_inicio);
+        const fechaFormateada = fecha.toLocaleDateString('es-MX') + ' ' + fecha.toLocaleTimeString('es-MX', {hour: '2-digit', minute: '2-digit'});
+        
+        return `
+        <tr>
+          <td>${c.id_cirujia}</td>
+          <td>${c.paciente_nombre || 'N/A'} ${c.paciente_paterno || ''}</td>
+          <td>${fechaFormateada}</td>
+          <td>${c.quirofano_nombre || 'N/A'}</td>
+          <td>${c.nombre_equipo || 'N/A'}</td>
+          <td><span class="estado-badge estado-${c.estado}">${c.estado}</span></td>
+          <td>
+            <button class="btn-edit" onclick="editarCirugia(${c.id_cirujia})">Editar</button>
+            <button class="btn-delete" onclick="eliminarCirugia(${c.id_cirujia})">Eliminar</button>
+          </td>
+        </tr>
+      `}).join('');
+    }
+
+    function mostrarFormularioCrear() {
+      modoEdicion = false;
+      document.getElementById('modal-title').textContent = 'Nueva Cirugía';
+      document.getElementById('cirugia-form').reset();
+      document.getElementById('id_cirujia').value = '';
+      document.getElementById('modal').style.display = 'block';
+    }
+
+    async function editarCirugia(id) {
+      const cirugia = cirugias.find(c => c.id_cirujia == id);
+      if (!cirugia) return;
+
+      modoEdicion = true;
+      document.getElementById('modal-title').textContent = 'Editar Cirugía';
+      document.getElementById('id_cirujia').value = cirugia.id_cirujia;
+      document.getElementById('id_paciente').value = cirugia.id_paciente;
+      document.getElementById('id_quirofano').value = cirugia.id_quirofano;
+      document.getElementById('id_tipo_cirujia').value = cirugia.id_tipo_cirujia;
+      document.getElementById('id_equipo').value = cirugia.id_equipo;
+      
+      const fecha = new Date(cirugia.fecha_inicio);
+      const fechaLocal = new Date(fecha.getTime() - fecha.getTimezoneOffset() * 60000);
+      document.getElementById('fecha_inicio').value = fechaLocal.toISOString().slice(0, 16);
+      
+      document.getElementById('motivo').value = cirugia.motivo || '';
+      document.getElementById('descripcion').value = cirugia.descripcion || '';
+      document.getElementById('estado').value = cirugia.estado;
+
+      document.getElementById('modal').style.display = 'block';
+    }
+
+    async function eliminarCirugia(id) {
+      if (!confirm('¿Estás seguro de eliminar esta cirugía?')) return;
+
+      const resultado = await CirugiasAPI.eliminar(id);
+      if (resultado) {
+        alert('Cirugía eliminada correctamente');
+        cargarCirugias();
+      }
+    }
+
+    function cerrarModal() {
+      document.getElementById('modal').style.display = 'none';
+      document.getElementById('cirugia-form').reset();
+    }
+
+    document.getElementById('cirugia-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = {
+        id_paciente: parseInt(document.getElementById('id_paciente').value),
+        id_quirofano: parseInt(document.getElementById('id_quirofano').value),
+        id_tipo_cirujia: parseInt(document.getElementById('id_tipo_cirujia').value),
+        id_equipo: parseInt(document.getElementById('id_equipo').value),
+        fecha_inicio: document.getElementById('fecha_inicio').value,
+        motivo: document.getElementById('motivo').value,
+        descripcion: document.getElementById('descripcion').value || null,
+        estado: document.getElementById('estado').value
+      };
+
+      let resultado;
+
+      if (modoEdicion) {
+        const id = document.getElementById('id_cirujia').value;
+        resultado = await CirugiasAPI.actualizar(id, formData);
+        if (resultado) alert('Cirugía actualizada correctamente');
+      } else {
+        // NO GENERES id_cirujia aquí
+        // MySQL lo generará automáticamente con AUTO_INCREMENT
+        resultado = await CirugiasAPI.crear(formData);
+        if (resultado) alert('Cirugía creada correctamente');
+      }
+
+      if (resultado) {
+        cerrarModal();
+        cargarCirugias();
+      }
+    });
+
+    window.onclick = function(event) {
+      const modal = document.getElementById('modal');
+      if (event.target == modal) cerrarModal();
+    }
+
+    cargarDatos();
+  </script>
+</body>
+</html>

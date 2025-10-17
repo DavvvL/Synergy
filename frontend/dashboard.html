@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Clínica Synergy</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+    }
+
+    .stat-card h3 {
+      color: #7f8c8d;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-card .number {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-card.blue .number { color: #3498db; }
+    .stat-card.green .number { color: #27ae60; }
+    .stat-card.orange .number { color: #f39c12; }
+    .stat-card.red .number { color: #e74c3c; }
+    .stat-card.purple .number { color: #9b59b6; }
+
+    .stat-card .label {
+      color: #95a5a6;
+      font-size: 0.85rem;
+    }
+
+    .welcome-section {
+      background: linear-gradient(135deg, #384a98 0%, #ffffff 130%);
+      color: white;
+      padding: 2rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .welcome-section h2 {
+      margin-bottom: 0.5rem;
+      font-size: 2rem;
+    }
+
+    .welcome-section p {
+      opacity: 0.9;
+      font-size: 1.1rem;
+    }
+
+    .cirugias-list {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .cirugia-item {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border-left: 4px solid #f39c12;
+    }
+
+    .cirugia-item h4 {
+      color: #2c3e50;
+      margin-bottom: 0.5rem;
+    }
+
+    .cirugia-item .info {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.5rem;
+      color: #7f8c8d;
+      font-size: 0.9rem;
+    }
+
+    .cirugia-item .status {
+      display: inline-block;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      background-color: #f39c12;
+      color: white;
+      margin-top: 0.5rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: #95a5a6;
+    }
+
+    .empty-state svg {
+      width: 100px;
+      height: 100px;
+      margin-bottom: 1rem;
+      opacity: 0.3;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <img 
+        src="logo_synergy transparente_blanco.png" 
+        alt="Synergy Logo" 
+        style="width: 40%; max-width: 350px; margin: 0 auto; display: block;"
+        >
+    </div>
+    <div class="navbar-menu">
+      <a href="dashboard.html" class="active">Dashboard</a>
+      <a href="empleados.html" id="nav-empleados">Empleados</a>
+      <a href="pacientes.html" id="nav-pacientes">Pacientes</a>
+      <a href="cirugias.html" id="nav-cirugias">Cirugías</a>
+      <a href="inventario.html" id="nav-inventario">Inventario</a>
+    </div>
+    <div class="navbar-user">
+      <span id="userName"></span>
+      <span id="userRole"></span>
+      <button onclick="cerrarSesion()">Cerrar Sesión</button>
+    </div>
+  </nav>
+
+  <!-- Contenido Principal -->
+  <div class="container">
+    <!-- Sección de Bienvenida -->
+    <div class="welcome-section">
+      <h2>Bienvenido, <span id="nombreCompleto"></span></h2>
+      <p>Gestiona tu clínica desde un solo lugar</p>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="stats-grid">
+      <div class="stat-card blue" id="card-pacientes">
+        <h3>Pacientes</h3>
+        <div class="number" id="total-pacientes">0</div>
+        <div class="label">Total registrados</div>
+      </div>
+
+      <div class="stat-card green" id="card-cirugias-hoy">
+        <h3>Cirugías Hoy</h3>
+        <div class="number" id="cirugias-hoy">0</div>
+        <div class="label">En agenda</div>
+      </div>
+
+      <div class="stat-card orange" id="card-cirugias-pendientes">
+        <h3>Pendientes</h3>
+        <div class="number" id="cirugias-pendientes">0</div>
+        <div class="label">Cirugías programadas</div>
+      </div>
+
+      <div class="stat-card purple" id="card-empleados" style="display: none;">
+        <h3>Empleados</h3>
+        <div class="number" id="total-empleados">0</div>
+        <div class="label">Personal activo</div>
+      </div>
+
+      <div class="stat-card red" id="card-inventario" style="display: none;">
+        <h3>Alerta Stock</h3>
+        <div class="number" id="items-bajo-stock">0</div>
+        <div class="label">Items críticos</div>
+      </div>
+    </div>
+
+    <!-- Próximas Cirugías -->
+    <div class="card">
+      <h3 style="margin-bottom: 1.5rem; color: #2c3e50;">📋 Próximas Cirugías</h3>
+      <div id="proximas-cirugias" class="cirugias-list">
+        <div class="empty-state">
+          <p>Cargando...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/auth.js"></script>
+  <script src="js/permisos.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    // Verificar sesión
+    verificarSesion();
+
+    // Aplicar permisos y mostrar info del usuario
+    PermisosManager.aplicarPermisosNavbar();
+    PermisosManager.mostrarInfoUsuario();
+
+    const empleado = PermisosManager.obtenerEmpleado();
+    document.getElementById('nombreCompleto').textContent = 
+      `${empleado.nombre} ${empleado.paterno}`;
+
+    // Cargar dashboard
+    async function cargarDashboard() {
+      try {
+        const stats = await DashboardAPI.obtenerEstadisticas();
+        if (!stats) return;
+
+        // Estadísticas comunes
+        document.getElementById('total-pacientes').textContent = stats.totalPacientes || 0;
+        document.getElementById('cirugias-hoy').textContent = stats.cirugiasHoy || 0;
+        document.getElementById('cirugias-pendientes').textContent = stats.cirugiasPendientes || 0;
+
+        // Estadísticas específicas por rol
+        if (stats.totalEmpleados !== undefined) {
+          document.getElementById('total-empleados').textContent = stats.totalEmpleados;
+          document.getElementById('card-empleados').style.display = 'block';
+        }
+
+        if (stats.itemsBajoStock !== undefined) {
+          document.getElementById('items-bajo-stock').textContent = stats.itemsBajoStock;
+          document.getElementById('card-inventario').style.display = 'block';
+        }
+
+        // Mostrar próximas cirugías
+        mostrarProximasCirugias(stats.proximasCirugias || []);
+      } catch (error) {
+        console.error('Error al cargar dashboard:', error);
+      }
+    }
+
+    function mostrarProximasCirugias(cirugias) {
+      const container = document.getElementById('proximas-cirugias');
+
+      if (cirugias.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <p>📅 No hay cirugías programadas próximamente</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = cirugias.map(c => {
+        const fecha = new Date(c.fecha_inicio);
+        const fechaFormateada = fecha.toLocaleDateString('es-MX', {
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric'
+        });
+        const horaFormateada = fecha.toLocaleTimeString('es-MX', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+
+        return `
+          <div class="cirugia-item">
+            <h4>👤 ${c.nombre} ${c.paterno} ${c.materno || ''}</h4>
+            <div class="info">
+              <div>📅 <strong>Fecha:</strong> ${fechaFormateada}</div>
+              <div>⏰ <strong>Hora:</strong> ${horaFormateada}</div>
+              <div>🏥 <strong>Quirófano:</strong> ${c.quirofano || 'N/A'}</div>
+              <div>👥 <strong>Equipo:</strong> ${c.nombre_equipo || 'N/A'}</div>
+              <div>🔬 <strong>Tipo:</strong> ${c.tipo_nombre || 'N/A'}</div>
+            </div>
+            <span class="status">${c.estado}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Cargar datos al iniciar
+    document.addEventListener('DOMContentLoaded', cargarDashboard);
+
+    // Auto-refresh cada 30 segundos
+    setInterval(cargarDashboard, 30000);
+  </script>
+</body>
+</html>

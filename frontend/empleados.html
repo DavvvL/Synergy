@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Empleados - Clínica Synergy</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .badge-activo { 
+      background: #27ae60; 
+      color: white; 
+      padding: 0.3rem 0.8rem; 
+      border-radius: 20px;
+      font-size: 0.85rem;
+    }
+    .badge-inactivo { 
+      background: #95a5a6; 
+      color: white; 
+      padding: 0.3rem 0.8rem; 
+      border-radius: 20px;
+      font-size: 0.85rem;
+    }
+    .puesto-badge {
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-transform: capitalize;
+    }
+    .puesto-admin { background: #9b59b6; color: white; }
+    .puesto-doctor { background: #3498db; color: white; }
+    .puesto-enfermero { background: #1abc9c; color: white; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <img 
+        src="logo_synergy transparente_blanco.png" 
+        alt="Synergy Logo" 
+        style="width: 40%; max-width: 350px; margin: 0 auto; display: block;"
+      >
+    </div>
+    <div class="navbar-menu">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="empleados.html" class="active">Empleados</a>
+      <a href="pacientes.html" id="nav-pacientes">Pacientes</a>
+      <a href="cirugias.html" id="nav-cirugias">Cirugías</a>
+      <a href="inventario.html" id="nav-inventario">Inventario</a>
+    </div>
+    <div class="navbar-user">
+      <span id="userName"></span>
+      <span id="userRole"></span>
+      <button onclick="cerrarSesion()">Cerrar Sesión</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-header">
+      <h2>👥 Gestión de Empleados</h2>
+      <button class="btn-primary" onclick="mostrarFormularioCrear()">+ Nuevo Empleado</button>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre Completo</th>
+            <th>Correo</th>
+            <th>Puesto</th>
+            <th>Turno</th>
+            <th>Teléfono</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="empleados-tbody">
+          <tr><td colspan="8" class="text-center">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Nuevo Empleado</h3>
+        <span class="close" onclick="cerrarModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="empleado-form">
+          <input type="hidden" id="id_empleado">
+
+          <div class="form-group">
+            <label>Nombre *</label>
+            <input type="text" id="nombre" required maxlength="25">
+          </div>
+
+          <div class="form-group">
+            <label>Apellido Paterno *</label>
+            <input type="text" id="paterno" required maxlength="25">
+          </div>
+
+          <div class="form-group">
+            <label>Apellido Materno *</label>
+            <input type="text" id="materno" required maxlength="25">
+          </div>
+
+          <div class="form-group">
+            <label>Correo *</label>
+            <input type="email" id="correo" required maxlength="40">
+          </div>
+
+          <div class="form-group">
+            <label>Contraseña *</label>
+            <input type="password" id="contraseña" required maxlength="30" 
+                   placeholder="Dejar en blanco para no cambiar">
+          </div>
+
+          <div class="form-group">
+            <label>Puesto *</label>
+            <select id="puesto" required>
+              <option value="">Cargando...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Turno *</label>
+            <select id="turno" required>
+              <option value="">Seleccionar...</option>
+              <option value="Matutino">Matutino</option>
+              <option value="Vespertino">Vespertino</option>
+              <option value="Nocturno">Nocturno</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Teléfono *</label>
+            <input type="tel" id="telefono" required pattern="[0-9]{10}" placeholder="10 dígitos">
+          </div>
+
+          <div class="form-group">
+            <label>Equipo *</label>
+            <select id="id_equipo" required>
+              <option value="">Cargando...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="activo" checked>
+              Activo
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" onclick="cerrarModal()">Cancelar</button>
+            <button type="submit">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/permisos.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    verificarSesion();
+    if (!PermisosManager.esAdmin()) {
+      alert('Solo los administradores pueden acceder a esta página');
+      window.location.href = 'dashboard.html';
+    }
+
+    PermisosManager.aplicarPermisosNavbar();
+    PermisosManager.mostrarInfoUsuario();
+
+    let empleados = [];
+    let puestos = [];
+    let equipos = [];
+    let modoEdicion = false;
+
+    async function cargarDatos() {
+      await Promise.all([
+        cargarEmpleados(),
+        cargarPuestos(),
+        cargarEquipos()
+      ]);
+    }
+
+    async function cargarEmpleados() {
+      empleados = await EmpleadosAPI.obtenerTodos();
+      if (!empleados) return;
+      mostrarEmpleados();
+    }
+
+    async function cargarPuestos() {
+      puestos = await EmpleadosAPI.obtenerPuestos();
+      if (!puestos) return;
+      const select = document.getElementById('puesto');
+      select.innerHTML = '<option value="">Seleccionar puesto...</option>' +
+        puestos.map(p => `<option value="${p.puesto}">${p.puesto}</option>`).join('');
+    }
+
+    async function cargarEquipos() {
+      equipos = await EmpleadosAPI.obtenerEquipos();
+      if (!equipos) return;
+      const select = document.getElementById('id_equipo');
+      select.innerHTML = '<option value="">Seleccionar equipo...</option>' +
+        equipos.map(e => `<option value="${e.id_equipo}">${e.nombre_equipo}</option>`).join('');
+    }
+
+    function mostrarEmpleados() {
+      const tbody = document.getElementById('empleados-tbody');
+      
+      if (empleados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center">No hay empleados registrados</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = empleados.map(e => `
+        <tr>
+          <td>${e.id_empleado}</td>
+          <td>${e.nombre} ${e.paterno} ${e.materno}</td>
+          <td>${e.correo}</td>
+          <td><span class="puesto-badge puesto-${e.puesto}">${e.puesto}</span></td>
+          <td>${e.turno}</td>
+          <td>${e.telefono}</td>
+          <td><span class="${e.activo ? 'badge-activo' : 'badge-inactivo'}">${e.activo ? 'Activo' : 'Inactivo'}</span></td>
+          <td>
+            <button class="btn-edit" onclick="editarEmpleado(${e.id_empleado})">Editar</button>
+            <button class="btn-delete" onclick="eliminarEmpleado(${e.id_empleado})">Eliminar</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function mostrarFormularioCrear() {
+      modoEdicion = false;
+      document.getElementById('modal-title').textContent = 'Nuevo Empleado';
+      document.getElementById('empleado-form').reset();
+      document.getElementById('id_empleado').value = '';
+      document.getElementById('contraseña').placeholder = '';
+      document.getElementById('contraseña').required = true;
+      document.getElementById('modal').style.display = 'block';
+    }
+
+    function editarEmpleado(id) {
+      const empleado = empleados.find(e => e.id_empleado == id);
+      if (!empleado) return;
+
+      modoEdicion = true;
+      document.getElementById('modal-title').textContent = 'Editar Empleado';
+      document.getElementById('id_empleado').value = empleado.id_empleado;
+      document.getElementById('nombre').value = empleado.nombre;
+      document.getElementById('paterno').value = empleado.paterno;
+      document.getElementById('materno').value = empleado.materno;
+      document.getElementById('correo').value = empleado.correo;
+      document.getElementById('contraseña').value = '';
+      document.getElementById('contraseña').placeholder = 'Dejar en blanco para no cambiar';
+      document.getElementById('contraseña').required = false;
+      document.getElementById('puesto').value = empleado.puesto;
+      document.getElementById('turno').value = empleado.turno;
+      document.getElementById('telefono').value = empleado.telefono;
+      document.getElementById('id_equipo').value = empleado.id_equipo;
+      document.getElementById('activo').checked = empleado.activo == 1;
+
+      document.getElementById('modal').style.display = 'block';
+    }
+
+    async function eliminarEmpleado(id) {
+      if (!confirm('¿Estás seguro de eliminar este empleado?')) return;
+
+      const resultado = await EmpleadosAPI.eliminar(id);
+      if (resultado) {
+        alert('Empleado eliminado correctamente');
+        cargarEmpleados();
+      }
+    }
+
+    function cerrarModal() {
+      document.getElementById('modal').style.display = 'none';
+      document.getElementById('empleado-form').reset();
+    }
+
+    document.getElementById('empleado-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = {
+        nombre: document.getElementById('nombre').value,
+        paterno: document.getElementById('paterno').value,
+        materno: document.getElementById('materno').value,
+        correo: document.getElementById('correo').value,
+        puesto: document.getElementById('puesto').value,
+        turno: document.getElementById('turno').value,
+        telefono: parseInt(document.getElementById('telefono').value),
+        id_equipo: parseInt(document.getElementById('id_equipo').value),
+        activo: document.getElementById('activo').checked ? 1 : 0
+      };
+
+      const contraseña = document.getElementById('contraseña').value;
+      if (contraseña) {
+        formData.contraseña = contraseña;
+      }
+
+      let resultado;
+
+      if (modoEdicion) {
+        const id = document.getElementById('id_empleado').value;
+        resultado = await EmpleadosAPI.actualizar(id, formData);
+        if (resultado) alert('Empleado actualizado correctamente');
+      } else {
+        resultado = await EmpleadosAPI.crear(formData);
+        if (resultado) alert('Empleado creado correctamente');
+      }
+
+      if (resultado) {
+        cerrarModal();
+        cargarEmpleados();
+      }
+    });
+
+    window.onclick = function(event) {
+      const modal = document.getElementById('modal');
+      if (event.target == modal) cerrarModal();
+    }
+
+    cargarDatos();
+  </script>
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pacientes - Clínica Synergy</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <img 
+        src="logo_synergy transparente_blanco.png" 
+        alt="Synergy Logo" 
+        style="width: 40%; max-width: 350px; margin: 0 auto; display: block;"
+      >
+    </div>
+    <div class="navbar-menu">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="empleados.html" id="nav-empleados">Empleados</a>
+      <a href="pacientes.html" class="active">Pacientes</a>
+      <a href="cirugias.html" id="nav-cirugias">Cirugías</a>
+      <a href="inventario.html" id="nav-inventario">Inventario</a>
+    </div>
+    <div class="navbar-user">
+      <span id="userName"></span>
+      <span id="userRole"></span>
+      <button onclick="cerrarSesion()">Cerrar Sesión</button>
+    </div>
+  </nav>
+
+  <!-- Contenido Principal -->
+  <div class="container">
+    <div class="page-header">
+      <h2>👥 Gestión de Pacientes</h2>
+      <button class="btn-primary" onclick="mostrarFormularioCrear()">+ Nuevo Paciente</button>
+    </div>
+
+    <!-- Tabla de Pacientes -->
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre Completo</th>
+            <th>Sexo</th>
+            <th>Edad</th>
+            <th>Teléfono</th>
+            <th>Contacto</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="pacientes-tbody">
+          <tr><td colspan="7" class="text-center">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Nuevo Paciente</h3>
+        <span class="close" onclick="cerrarModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="paciente-form">
+          <input type="hidden" id="id_paciente">
+
+          <div class="form-group">
+            <label>Nombre *</label>
+            <input type="text" id="nombre" required maxlength="20">
+          </div>
+
+          <div class="form-group">
+            <label>Apellido Paterno *</label>
+            <input type="text" id="paterno" required maxlength="20">
+          </div>
+
+          <div class="form-group">
+            <label>Apellido Materno</label>
+            <input type="text" id="materno" maxlength="20">
+          </div>
+
+          <div class="form-group">
+            <label>Sexo *</label>
+            <select id="sexo" required>
+              <option value="">Seleccionar...</option>
+              <option value="Masculino">Masculino</option>
+              <option value="Femenino">Femenino</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Edad *</label>
+            <input type="number" id="edad" required min="0" max="120">
+          </div>
+
+          <div class="form-group">
+            <label>Teléfono *</label>
+            <input type="tel" id="telefono" required pattern="[0-9]{10}" placeholder="10 dígitos">
+          </div>
+
+          <div class="form-group">
+            <label>Contacto de Emergencia</label>
+            <input type="tel" id="contacto" pattern="[0-9]{10}" placeholder="10 dígitos">
+          </div>
+
+          <div class="form-actions">
+            <button type="button" onclick="cerrarModal()">Cancelar</button>
+            <button type="submit">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/auth.js"></script>
+  <script src="js/permisos.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    // Verificar sesión y permisos
+    verificarSesion();
+    if (!PermisosManager.tienePermiso('pacientes')) {
+      alert('No tienes permisos para acceder a esta página');
+      window.location.href = 'dashboard.html';
+    }
+
+    PermisosManager.aplicarPermisosNavbar();
+    PermisosManager.mostrarInfoUsuario();
+
+    let pacientes = [];
+    let modoEdicion = false;
+
+    // Cargar pacientes
+    async function cargarPacientes() {
+      pacientes = await PacientesAPI.obtenerTodos();
+      if (!pacientes) return;
+      mostrarPacientes();
+    }
+
+    function mostrarPacientes() {
+      const tbody = document.getElementById('pacientes-tbody');
+      
+      if (pacientes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center">No hay pacientes registrados</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = pacientes.map(p => `
+        <tr>
+          <td>${p.id_paciente}</td>
+          <td>${p.nombre} ${p.paterno} ${p.materno || ''}</td>
+          <td>${p.sexo}</td>
+          <td>${p.edad}</td>
+          <td>${p.telefono}</td>
+          <td>${p.contacto || 'N/A'}</td>
+          <td>
+            <button class="btn-edit" onclick="editarPaciente(${p.id_paciente})">Editar</button>
+            <button class="btn-delete" onclick="eliminarPaciente(${p.id_paciente})">Eliminar</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function mostrarFormularioCrear() {
+      modoEdicion = false;
+      document.getElementById('modal-title').textContent = 'Nuevo Paciente';
+      document.getElementById('paciente-form').reset();
+      document.getElementById('id_paciente').value = '';
+      document.getElementById('modal').style.display = 'block';
+    }
+
+    async function editarPaciente(id) {
+      const paciente = pacientes.find(p => p.id_paciente == id);
+      if (!paciente) return;
+
+      modoEdicion = true;
+      document.getElementById('modal-title').textContent = 'Editar Paciente';
+      document.getElementById('id_paciente').value = paciente.id_paciente;
+      document.getElementById('nombre').value = paciente.nombre;
+      document.getElementById('paterno').value = paciente.paterno;
+      document.getElementById('materno').value = paciente.materno || '';
+      document.getElementById('sexo').value = paciente.sexo;
+      document.getElementById('edad').value = paciente.edad;
+      document.getElementById('telefono').value = paciente.telefono;
+      document.getElementById('contacto').value = paciente.contacto || '';
+
+      document.getElementById('modal').style.display = 'block';
+    }
+
+    async function eliminarPaciente(id) {
+      if (!confirm('¿Estás seguro de eliminar este paciente?')) return;
+
+      const resultado = await PacientesAPI.eliminar(id);
+      if (resultado) {
+        alert('Paciente eliminado correctamente');
+        cargarPacientes();
+      }
+    }
+
+    function cerrarModal() {
+      document.getElementById('modal').style.display = 'none';
+      document.getElementById('paciente-form').reset();
+    }
+
+    // Submit formulario
+    document.getElementById('paciente-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = {
+        nombre: document.getElementById('nombre').value,
+        paterno: document.getElementById('paterno').value,
+        materno: document.getElementById('materno').value || null,
+        sexo: document.getElementById('sexo').value,
+        edad: parseInt(document.getElementById('edad').value),
+        telefono: parseInt(document.getElementById('telefono').value),
+        contacto: document.getElementById('contacto').value ? 
+                  parseInt(document.getElementById('contacto').value) : null
+      };
+
+      let resultado;
+
+      if (modoEdicion) {
+        const id = document.getElementById('id_paciente').value;
+        resultado = await PacientesAPI.actualizar(id, formData);
+        if (resultado) alert('Paciente actualizado correctamente');
+      } else {
+        // NO GENERES id_paciente aquí
+        // MySQL lo generará automáticamente con AUTO_INCREMENT
+        resultado = await PacientesAPI.crear(formData);
+        if (resultado) alert('Paciente creado correctamente');
+      }
+
+      if (resultado) {
+        cerrarModal();
+        cargarPacientes();
+      }
+    });
+
+    // Cerrar modal al hacer clic fuera
+    window.onclick = function(event) {
+      const modal = document.getElementById('modal');
+      if (event.target == modal) cerrarModal();
+    }
+
+    // Cargar al iniciar
+    cargarPacientes();
+  </script>
+</body>
+</html>

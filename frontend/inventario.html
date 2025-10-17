@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventario - Clínica Synergy</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .stock-bajo { background-color: #fee; }
+    .stock-medio { background-color: #ffa; }
+    .stock-alto { background-color: #efe; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <img 
+        src="logo_synergy transparente_blanco.png" 
+        alt="Synergy Logo" 
+        style="width: 40%; max-width: 350px; margin: 0 auto; display: block;"
+      >
+    </div>
+    <div class="navbar-menu">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="empleados.html" id="nav-empleados">Empleados</a>
+      <a href="pacientes.html" id="nav-pacientes">Pacientes</a>
+      <a href="cirugias.html" id="nav-cirugias">Cirugías</a>
+      <a href="inventario.html" class="active">Inventario</a>
+    </div>
+    <div class="navbar-user">
+      <span id="userName"></span>
+      <span id="userRole"></span>
+      <button onclick="cerrarSesion()">Cerrar Sesión</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-header">
+      <h2>📦 Gestión de Inventario</h2>
+      <button class="btn-primary" onclick="mostrarFormularioCrear()">+ Nuevo Item</button>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Cantidad</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="inventario-tbody">
+          <tr><td colspan="5" class="text-center">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Nuevo Item</h3>
+        <span class="close" onclick="cerrarModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="inventario-form">
+          <input type="hidden" id="id_inventario">
+
+          <div class="form-group">
+            <label>Nombre *</label>
+            <input type="text" id="nombre" required maxlength="15">
+          </div>
+
+          <div class="form-group">
+            <label>Cantidad *</label>
+            <input type="number" id="cantidad" required min="0">
+          </div>
+
+          <div class="form-actions">
+            <button type="button" onclick="cerrarModal()">Cancelar</button>
+            <button type="submit">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Actualizar Cantidad -->
+  <div id="modal-cantidad" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3>Actualizar Cantidad</h3>
+        <span class="close" onclick="cerrarModalCantidad()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="cantidad-form">
+          <input type="hidden" id="id_item_cantidad">
+          <p><strong>Item:</strong> <span id="nombre_item"></span></p>
+          <p><strong>Cantidad actual:</strong> <span id="cantidad_actual"></span></p>
+
+          <div class="form-group">
+            <label>Nueva Cantidad *</label>
+            <input type="number" id="nueva_cantidad" required min="0">
+          </div>
+
+          <div class="form-actions">
+            <button type="button" onclick="cerrarModalCantidad()">Cancelar</button>
+            <button type="submit">Actualizar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/permisos.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    verificarSesion();
+    if (!PermisosManager.tienePermiso('inventario')) {
+      alert('No tienes permisos para acceder a esta página');
+      window.location.href = 'dashboard.html';
+    }
+
+    PermisosManager.aplicarPermisosNavbar();
+    PermisosManager.mostrarInfoUsuario();
+
+    let inventario = [];
+    let modoEdicion = false;
+
+    async function cargarInventario() {
+      inventario = await InventarioAPI.obtenerTodo();
+      if (!inventario) return;
+      mostrarInventario();
+    }
+
+    function mostrarInventario() {
+      const tbody = document.getElementById('inventario-tbody');
+      
+      if (inventario.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No hay items en el inventario</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = inventario.map(item => {
+        let estadoClass = '';
+        let estadoTexto = '';
+        
+        if (item.cantidad < 10) {
+          estadoClass = 'stock-bajo';
+          estadoTexto = '🔴 Crítico';
+        } else if (item.cantidad < 50) {
+          estadoClass = 'stock-medio';
+          estadoTexto = '🟡 Medio';
+        } else {
+          estadoClass = 'stock-alto';
+          estadoTexto = '🟢 Bueno';
+        }
+
+        return `
+        <tr class="${estadoClass}">
+          <td>${item.id_inventario}</td>
+          <td>${item.nombre}</td>
+          <td>${item.cantidad}</td>
+          <td>${estadoTexto}</td>
+          <td>
+            <button class="btn-view" onclick="mostrarModalCantidad(${item.id_inventario})">Actualizar Cantidad</button>
+            <button class="btn-edit" onclick="editarItem(${item.id_inventario})">Editar</button>
+            <button class="btn-delete" onclick="eliminarItem(${item.id_inventario})">Eliminar</button>
+          </td>
+        </tr>
+      `}).join('');
+    }
+
+    function mostrarFormularioCrear() {
+      modoEdicion = false;
+      document.getElementById('modal-title').textContent = 'Nuevo Item';
+      document.getElementById('inventario-form').reset();
+      document.getElementById('id_inventario').value = '';
+      document.getElementById('modal').style.display = 'block';
+    }
+
+    function editarItem(id) {
+      const item = inventario.find(i => i.id_inventario == id);
+      if (!item) return;
+
+      modoEdicion = true;
+      document.getElementById('modal-title').textContent = 'Editar Item';
+      document.getElementById('id_inventario').value = item.id_inventario;
+      document.getElementById('nombre').value = item.nombre;
+      document.getElementById('cantidad').value = item.cantidad;
+
+      document.getElementById('modal').style.display = 'block';
+    }
+
+    function mostrarModalCantidad(id) {
+      const item = inventario.find(i => i.id_inventario == id);
+      if (!item) return;
+
+      document.getElementById('id_item_cantidad').value = item.id_inventario;
+      document.getElementById('nombre_item').textContent = item.nombre;
+      document.getElementById('cantidad_actual').textContent = item.cantidad;
+      document.getElementById('nueva_cantidad').value = item.cantidad;
+
+      document.getElementById('modal-cantidad').style.display = 'block';
+    }
+
+    async function eliminarItem(id) {
+      if (!confirm('¿Estás seguro de eliminar este item?')) return;
+
+      const resultado = await InventarioAPI.eliminar(id);
+      if (resultado) {
+        alert('Item eliminado correctamente');
+        cargarInventario();
+      }
+    }
+
+    function cerrarModal() {
+      document.getElementById('modal').style.display = 'none';
+      document.getElementById('inventario-form').reset();
+    }
+
+    function cerrarModalCantidad() {
+      document.getElementById('modal-cantidad').style.display = 'none';
+      document.getElementById('cantidad-form').reset();
+    }
+
+    document.getElementById('inventario-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = {
+        nombre: document.getElementById('nombre').value,
+        cantidad: parseInt(document.getElementById('cantidad').value)
+      };
+
+      let resultado;
+
+      if (modoEdicion) {
+        const id = document.getElementById('id_inventario').value;
+        resultado = await InventarioAPI.actualizar(id, formData);
+        if (resultado) alert('Item actualizado correctamente');
+      } else {
+        // NO GENERES id_inventario aquí
+        // MySQL lo generará automáticamente con AUTO_INCREMENT
+        resultado = await InventarioAPI.crear(formData);
+        if (resultado) alert('Item creado correctamente');
+      }
+
+      if (resultado) {
+        cerrarModal();
+        cargarInventario();
+      }
+    });
+
+    document.getElementById('cantidad-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const id = document.getElementById('id_item_cantidad').value;
+      const cantidad = parseInt(document.getElementById('nueva_cantidad').value);
+
+      const resultado = await InventarioAPI.actualizarCantidad(id, cantidad);
+      if (resultado) {
+        alert('Cantidad actualizada correctamente');
+        cerrarModalCantidad();
+        cargarInventario();
+      }
+    });
+
+    window.onclick = function(event) {
+      const modal = document.getElementById('modal');
+      const modalCantidad = document.getElementById('modal-cantidad');
+      if (event.target == modal) cerrarModal();
+      if (event.target == modalCantidad) cerrarModalCantidad();
+    }
+
+    cargarInventario();
+  </script>
+</body>
+</html>
