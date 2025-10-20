@@ -124,3 +124,11 @@ const DashboardAPI = {
   obtenerEmpleadosPorPuesto: () => API.get('/dashboard/empleados-puesto'),
   obtenerInventarioCritico: () => API.get('/dashboard/inventario-critico')
 };
+
+
+const CatalogoAPI = {
+  obtenerTodos: () => API.get('/catalogo'), // Endpoint a crear en el backend
+  // Aquí irían los métodos para crear, editar, etc., el catálogo en el futuro
+};
+
+// ... (el resto de las APIs se mantiene igual) ...

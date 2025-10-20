@@ -7,7 +7,7 @@ class CirugiaController {
         console.error('Error al obtener cirugías:', err);
         return res.status(500).json({ error: 'Error al obtener cirugías' });
       }
-      res.json(results);
+      res.json(results.rows);
     });
   }
 
@@ -18,31 +18,33 @@ class CirugiaController {
         console.error('Error al obtener cirugía:', err);
         return res.status(500).json({ error: 'Error al obtener cirugía' });
       }
-      if (results.length === 0) {
+      if (results.rows.length === 0) {
         return res.status(404).json({ error: 'Cirugía no encontrada' });
       }
-      res.json(results[0]);
+      res.json(results.rows[0]);
     });
   }
 
   static crear(req, res) {
     const nuevaCirugia = req.body;
-    nuevaCirugia.creado = new Date();
-    nuevaCirugia.actualizado = new Date();
+    // La DB se encarga de los timestamps con DEFAULT y TRIGGERS
+    // No es necesario asignarlos aquí, pero no causa error si se dejan.
 
     CirugiaModel.create(nuevaCirugia, (err, result) => {
       if (err) {
         console.error('Error al crear cirugía:', err);
         return res.status(500).json({ error: 'Error al crear cirugía' });
       }
-      res.status(201).json({ id: result.insertId, ...nuevaCirugia });
+      // **CAMBIO CLAVE**: Obtener el ID desde result.rows[0].id_cirugia
+      const nuevoId = result.rows[0].id_cirugia;
+      res.status(201).json({ id: nuevoId, ...nuevaCirugia });
     });
   }
 
   static actualizar(req, res) {
     const id = req.params.id;
     const datos = req.body;
-    datos.actualizado = new Date();
+    // El trigger en la DB se encarga de 'actualizado'
 
     CirugiaModel.update(id, datos, (err) => {
       if (err) {
@@ -71,7 +73,7 @@ class CirugiaController {
         console.error('Error al obtener tipos de cirugía:', err);
         return res.status(500).json({ error: 'Error al obtener tipos de cirugía' });
       }
-      res.json(results);
+      res.json(results.rows);
     });
   }
 
@@ -81,7 +83,7 @@ class CirugiaController {
         console.error('Error al obtener quirófanos:', err);
         return res.status(500).json({ error: 'Error al obtener quirófanos' });
       }
-      res.json(results);
+      res.json(results.rows);
     });
   }
 }

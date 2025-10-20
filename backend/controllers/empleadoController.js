@@ -7,7 +7,7 @@ class EmpleadoController {
         console.error('Error al obtener empleados:', err);
         return res.status(500).json({ error: 'Error al obtener empleados' });
       }
-      res.json(results);
+      res.json(results.rows);
     });
   }
 
@@ -18,10 +18,10 @@ class EmpleadoController {
         console.error('Error al obtener empleado:', err);
         return res.status(500).json({ error: 'Error al obtener empleado' });
       }
-      if (results.length === 0) {
+      if (results.rows.length === 0) {
         return res.status(404).json({ error: 'Empleado no encontrado' });
       }
-      res.json(results[0]);
+      res.json(results.rows[0]);
     });
   }
 
@@ -31,10 +31,12 @@ class EmpleadoController {
 
     EmpleadoModel.create(nuevoEmpleado, (err, result) => {
       if (err) {
-        console.error('❌ Error al crear empleado:', err.sqlMessage || err.message);
+        console.error('❌ Error al crear empleado:', err.message);
         return res.status(500).json({ error: 'Error al crear empleado' });
       }
-      res.status(201).json({ id: result.insertId, ...nuevoEmpleado });
+      // **CAMBIO CLAVE**: Obtener el ID desde result.rows[0].id_empleado
+      const nuevoId = result.rows[0].id_empleado;
+      res.status(201).json({ id: nuevoId, ...nuevoEmpleado });
     });
   }
 
@@ -69,7 +71,7 @@ class EmpleadoController {
         console.error('Error al obtener puestos:', err);
         return res.status(500).json({ error: 'Error al obtener puestos' });
       }
-      res.json(results);
+      res.json(results.rows);
     });
   }
 
@@ -79,7 +81,7 @@ class EmpleadoController {
         console.error('Error al obtener equipos:', err);
         return res.status(500).json({ error: 'Error al obtener equipos' });
       }
-      res.json(results);
+      res.json(results.rows);
     });
   }
 }

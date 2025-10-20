@@ -4,7 +4,7 @@ const db = require('../config/db');
 const PERMISOS = {
   admin: ['dashboard', 'empleados', 'inventario', 'pacientes', 'cirugias'],
   doctor: ['dashboard', 'pacientes', 'cirugias'],
-  enfermero: ['dashboard', 'pacientes', 'cirugias', 'inventario']
+  'enfermero/a': ['dashboard', 'pacientes', 'cirugias', 'inventario'] // <-- CORREGIDO a minúsculas
 };
 
 // Middleware para verificar autenticación
@@ -20,7 +20,8 @@ const verificarAuth = (req, res, next) => {
 
   // Verificar que el empleado existe y está activo
   db.query(
-    'SELECT id_empleado, nombre, paterno, correo, puesto, activo FROM empleados WHERE id_empleado = ?',
+    // **CAMBIO**: Se reemplaza ? por $1
+    'SELECT id_empleado, nombre, paterno, correo, puesto, activo FROM empleados WHERE id_empleado = $1',
     [idEmpleado],
     (err, results) => {
       if (err) {
@@ -28,7 +29,8 @@ const verificarAuth = (req, res, next) => {
         return res.status(500).json({ error: 'Error en el servidor' });
       }
 
-      if (results.length === 0 || !results[0].activo) {
+      // Se usa results.rows y se verifica que el empleado esté activo
+      if (results.rows.length === 0 || results.rows[0].activo !== true) {
         return res.status(401).json({ 
           error: 'No autorizado', 
           message: 'Empleado no encontrado o inactivo' 
@@ -36,19 +38,18 @@ const verificarAuth = (req, res, next) => {
       }
 
       // Agregar información del empleado a la request
-      req.empleado = results[0];
+      req.empleado = results.rows[0];
       next();
     }
   );
 };
 
-// Middleware para verificar permisos por rol
+// Middleware para verificar permisos por rol (sin cambios)
 const verificarPermiso = (...modulosPermitidos) => {
   return (req, res, next) => {
-    const puesto = req.empleado.puesto;
-    const permisosEmpleado = PERMISOS[puesto] || [];
+    const puesto = req.empleado.puesto.toLowerCase(); 
+    const permisosEmpleado = PERMISOS[puesto] || []; 
 
-    // Verificar si el empleado tiene permiso para alguno de los módulos
     const tienePermiso = modulosPermitidos.some(modulo => 
       permisosEmpleado.includes(modulo)
     );
@@ -66,9 +67,9 @@ const verificarPermiso = (...modulosPermitidos) => {
   };
 };
 
-// Middleware para verificar que solo es admin
+// Middleware para verificar que solo es admin (sin cambios)
 const soloAdmin = (req, res, next) => {
-  if (req.empleado.puesto !== 'admin') {
+  if (req.empleado.puesto.toLowerCase() !== 'admin') {
     return res.status(403).json({ 
       error: 'Acceso denegado',
       message: 'Solo los administradores pueden realizar esta acción'

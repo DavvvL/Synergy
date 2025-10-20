@@ -237,6 +237,36 @@
       `).join('');
     }
 
+    function clasePuesto(puesto) {
+        if (!puesto) return '';
+        return `puesto-${puesto.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+    }
+
+    function mostrarEmpleados() {
+      const tbody = document.getElementById('empleados-tbody');
+      
+      if (empleados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center">No hay empleados registrados</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = empleados.map(e => `
+        <tr>
+          <td>${e.id_empleado}</td>
+          <td>${e.nombre} ${e.paterno} ${e.materno}</td>
+          <td>${e.correo}</td>
+          <td><span class="puesto-badge ${clasePuesto(e.puesto)}">${e.puesto}</span></td>
+          <td>${e.turno}</td>
+          <td>${e.telefono}</td>
+          <td><span class="${e.activo ? 'badge-activo' : 'badge-inactivo'}">${e.activo ? 'Activo' : 'Inactivo'}</span></td>
+          <td>
+            <button class="btn-edit" onclick="editarEmpleado(${e.id_empleado})">Editar</button>
+            <button class="btn-delete" onclick="eliminarEmpleado(${e.id_empleado})">Eliminar</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
     function mostrarFormularioCrear() {
       modoEdicion = false;
       document.getElementById('modal-title').textContent = 'Nuevo Empleado';
@@ -267,6 +297,7 @@
       document.getElementById('id_equipo').value = empleado.id_equipo;
       document.getElementById('activo').checked = empleado.activo == 1;
 
+      document.getElementById('activo').checked = empleado.activo === true;
       document.getElementById('modal').style.display = 'block';
     }
 
@@ -295,9 +326,10 @@
         correo: document.getElementById('correo').value,
         puesto: document.getElementById('puesto').value,
         turno: document.getElementById('turno').value,
-        telefono: parseInt(document.getElementById('telefono').value),
+        telefono: document.getElementById('telefono').value, // El backend maneja la conversión
         id_equipo: parseInt(document.getElementById('id_equipo').value),
-        activo: document.getElementById('activo').checked ? 1 : 0
+        // **CAMBIO**: Enviar un booleano en lugar de 1/0
+        activo: document.getElementById('activo').checked
       };
 
       const contraseña = document.getElementById('contraseña').value;

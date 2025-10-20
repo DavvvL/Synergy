@@ -7,7 +7,8 @@ class InventarioController {
         console.error('Error al obtener inventario:', err);
         return res.status(500).json({ error: 'Error al obtener inventario' });
       }
-      res.json(results);
+      // El driver pg devuelve los resultados en la propiedad 'rows'
+      res.json(results.rows);
     });
   }
 
@@ -18,10 +19,10 @@ class InventarioController {
         console.error('Error al obtener item:', err);
         return res.status(500).json({ error: 'Error al obtener item' });
       }
-      if (results.length === 0) {
+      if (results.rows.length === 0) {
         return res.status(404).json({ error: 'Item no encontrado' });
       }
-      res.json(results[0]);
+      res.json(results.rows[0]);
     });
   }
 
@@ -33,7 +34,9 @@ class InventarioController {
         console.error('Error al crear item:', err);
         return res.status(500).json({ error: 'Error al crear item' });
       }
-      res.status(201).json({ id: result.insertId, ...nuevoItem });
+      // **CAMBIO CLAVE**: Obtener el ID desde result.rows[0].id_inventario
+      const nuevoId = result.rows[0].id_inventario;
+      res.status(201).json({ id: nuevoId, ...nuevoItem });
     });
   }
 

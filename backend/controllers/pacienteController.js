@@ -7,7 +7,7 @@ class PacienteController {
         console.error('Error al obtener pacientes:', err);
         return res.status(500).json({ error: 'Error al obtener pacientes' });
       }
-      res.json(results);
+      res.json(results.rows);
     });
   }
 
@@ -18,10 +18,10 @@ class PacienteController {
         console.error('Error al obtener paciente:', err);
         return res.status(500).json({ error: 'Error al obtener paciente' });
       }
-      if (results.length === 0) {
+      if (results.rows.length === 0) {
         return res.status(404).json({ error: 'Paciente no encontrado' });
       }
-      res.json(results[0]);
+      res.json(results.rows[0]);
     });
   }
 
@@ -34,7 +34,9 @@ class PacienteController {
         console.error('Error al crear paciente:', err);
         return res.status(500).json({ error: 'Error al crear paciente' });
       }
-      res.status(201).json({ id: result.insertId, ...nuevoPaciente });
+      // **CAMBIO CLAVE**: Obtener el ID desde result.rows[0].id_paciente
+      const nuevoId = result.rows[0].id_paciente;
+      res.status(201).json({ id: nuevoId, ...nuevoPaciente });
     });
   }
 

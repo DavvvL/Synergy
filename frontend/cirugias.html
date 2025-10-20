@@ -76,7 +76,7 @@
       </div>
       <div class="modal-body">
         <form id="cirugia-form">
-          <input type="hidden" id="id_cirujia">
+          <input type="hidden" id="id_cirugia">
 
           <div class="form-group">
             <label>Paciente *</label>
@@ -94,7 +94,7 @@
 
           <div class="form-group">
             <label>Tipo de Cirugía *</label>
-            <select id="id_tipo_cirujia" required>
+            <select id="id_tipo_cirugia" required>
               <option value="">Cargando...</option>
             </select>
           </div>
@@ -144,11 +144,11 @@
   <script src="js/permisos.js"></script>
   <script src="js/api.js"></script>
   <script>
-    /*verificarSesion();
+    verificarSesion();
     if (!PermisosManager.tienePermiso('cirugias')) {
       alert('No tienes permisos para acceder a esta página');
       window.location.href = 'dashboard.html';
-    }*/
+    }
 
     PermisosManager.aplicarPermisosNavbar();
     PermisosManager.mostrarInfoUsuario();
@@ -195,9 +195,9 @@
     async function cargarTiposCirugia() {
       tiposCirugia = await CirugiasAPI.obtenerTipos();
       if (!tiposCirugia) return;
-      const select = document.getElementById('id_tipo_cirujia');
+      const select = document.getElementById('id_tipo_cirugia');
       select.innerHTML = '<option value="">Seleccionar tipo...</option>' +
-        tiposCirugia.map(t => `<option value="${t.id_tipo_cirujia}">${t.nombre}</option>`).join('');
+        tiposCirugia.map(t => `<option value="${t.id_tipo_cirugia}">${t.nombre}</option>`).join('');
     }
 
     async function cargarEquipos() {
@@ -222,15 +222,15 @@
         
         return `
         <tr>
-          <td>${c.id_cirujia}</td>
+          <td>${c.id_cirugia}</td>
           <td>${c.paciente_nombre || 'N/A'} ${c.paciente_paterno || ''}</td>
           <td>${fechaFormateada}</td>
           <td>${c.quirofano_nombre || 'N/A'}</td>
           <td>${c.nombre_equipo || 'N/A'}</td>
           <td><span class="estado-badge estado-${c.estado}">${c.estado}</span></td>
           <td>
-            <button class="btn-edit" onclick="editarCirugia(${c.id_cirujia})">Editar</button>
-            <button class="btn-delete" onclick="eliminarCirugia(${c.id_cirujia})">Eliminar</button>
+            <button class="btn-edit" onclick="editarCirugia(${c.id_cirugia})">Editar</button>
+            <button class="btn-delete" onclick="eliminarCirugia(${c.id_cirugia})">Eliminar</button>
           </td>
         </tr>
       `}).join('');
@@ -240,20 +240,20 @@
       modoEdicion = false;
       document.getElementById('modal-title').textContent = 'Nueva Cirugía';
       document.getElementById('cirugia-form').reset();
-      document.getElementById('id_cirujia').value = '';
+      document.getElementById('id_cirugia').value = '';
       document.getElementById('modal').style.display = 'block';
     }
 
     async function editarCirugia(id) {
-      const cirugia = cirugias.find(c => c.id_cirujia == id);
+      const cirugia = cirugias.find(c => c.id_cirugia == id);
       if (!cirugia) return;
 
       modoEdicion = true;
       document.getElementById('modal-title').textContent = 'Editar Cirugía';
-      document.getElementById('id_cirujia').value = cirugia.id_cirujia;
+      document.getElementById('id_cirugia').value = cirugia.id_cirugia;
       document.getElementById('id_paciente').value = cirugia.id_paciente;
       document.getElementById('id_quirofano').value = cirugia.id_quirofano;
-      document.getElementById('id_tipo_cirujia').value = cirugia.id_tipo_cirujia;
+      document.getElementById('id_tipo_cirugia').value = cirugia.id_tipo_cirugia;
       document.getElementById('id_equipo').value = cirugia.id_equipo;
       
       const fecha = new Date(cirugia.fecha_inicio);
@@ -288,7 +288,7 @@
       const formData = {
         id_paciente: parseInt(document.getElementById('id_paciente').value),
         id_quirofano: parseInt(document.getElementById('id_quirofano').value),
-        id_tipo_cirujia: parseInt(document.getElementById('id_tipo_cirujia').value),
+        id_tipo_cirugia: parseInt(document.getElementById('id_tipo_cirugia').value),
         id_equipo: parseInt(document.getElementById('id_equipo').value),
         fecha_inicio: document.getElementById('fecha_inicio').value,
         motivo: document.getElementById('motivo').value,
@@ -299,11 +299,11 @@
       let resultado;
 
       if (modoEdicion) {
-        const id = document.getElementById('id_cirujia').value;
+        const id = document.getElementById('id_cirugia').value;
         resultado = await CirugiasAPI.actualizar(id, formData);
         if (resultado) alert('Cirugía actualizada correctamente');
       } else {
-        // NO GENERES id_cirujia aquí
+        // NO GENERES id_cirugia aquí
         // MySQL lo generará automáticamente con AUTO_INCREMENT
         resultado = await CirugiasAPI.crear(formData);
         if (resultado) alert('Cirugía creada correctamente');

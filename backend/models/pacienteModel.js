@@ -6,19 +6,32 @@ class PacienteModel {
   }
 
   static getById(id, callback) {
-    db.query('SELECT * FROM pacientes WHERE id_paciente = ?', [id], callback);
+    // Cambiar ? por $1
+    db.query('SELECT * FROM pacientes WHERE id_paciente = $1', [id], callback);
   }
 
   static create(paciente, callback) {
-    db.query('INSERT INTO pacientes SET ?', paciente, callback);
+    // Reconstruir para PostgreSQL y retornar el ID
+    const columns = Object.keys(paciente);
+    const values = Object.values(paciente);
+    const placeholders = columns.map((_, i) => `$${i + 1}`).join(', ');
+    const query = `INSERT INTO pacientes (${columns.join(', ')}) VALUES (${placeholders}) RETURNING id_paciente`;
+
+    db.query(query, values, callback);
   }
 
   static update(id, datos, callback) {
-    db.query('UPDATE pacientes SET ? WHERE id_paciente = ?', [datos, id], callback);
+    // Reconstruir para PostgreSQL
+    const fields = Object.keys(datos).map((key, i) => `${key} = $${i + 1}`).join(', ');
+    const values = [...Object.values(datos), id];
+    const query = `UPDATE pacientes SET ${fields} WHERE id_paciente = $${Object.keys(datos).length + 1}`;
+
+    db.query(query, values, callback);
   }
 
   static delete(id, callback) {
-    db.query('DELETE FROM pacientes WHERE id_paciente = ?', [id], callback);
+    // Cambiar ? por $1
+    db.query('DELETE FROM pacientes WHERE id_paciente = $1', [id], callback);
   }
 }
 

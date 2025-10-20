@@ -9,14 +9,14 @@
     .stock-bajo { background-color: #fee; }
     .stock-medio { background-color: #ffa; }
     .stock-alto { background-color: #efe; }
-  </style>
+ </style>
 </head>
 <body>
   <nav class="navbar">
     <div class="navbar-brand">
-      <img 
-        src="logo_synergy transparente_blanco.png" 
-        alt="Synergy Logo" 
+      <img
+        src="logo_synergy transparente_blanco.png"
+        alt="Synergy Logo"
         style="width: 40%; max-width: 350px; margin: 0 auto; display: block;"
       >
     </div>
@@ -25,7 +25,7 @@
       <a href="empleados.html" id="nav-empleados">Empleados</a>
       <a href="pacientes.html" id="nav-pacientes">Pacientes</a>
       <a href="cirugias.html" id="nav-cirugias">Cirugías</a>
-      <a href="inventario.html" class="active">Inventario</a>
+      <a href="inventario.html" class="active" id="nav-inventario">Inventario</a>
     </div>
     <div class="navbar-user">
       <span id="userName"></span>
@@ -33,11 +33,10 @@
       <button onclick="cerrarSesion()">Cerrar Sesión</button>
     </div>
   </nav>
-
   <div class="container">
     <div class="page-header">
       <h2>📦 Gestión de Inventario</h2>
-      <button class="btn-primary" onclick="mostrarFormularioCrear()">+ Nuevo Item</button>
+      <button class="btn-primary" onclick="mostrarFormularioCrear()">+ Añadir del Catálogo</button>
     </div>
 
     <div class="table-container">
@@ -45,38 +44,50 @@
         <thead>
           <tr>
             <th>ID</th>
-            <th>Nombre</th>
-            <th>Cantidad</th>
+            <th>Nombre del Producto</th>
+            <th>Cantidad Actual</th>
+            <th>Cantidad Mínima</th>
             <th>Estado</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody id="inventario-tbody">
-          <tr><td colspan="5" class="text-center">Cargando...</td></tr>
+          <tr><td colspan="6" class="text-center">Cargando...</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- Modal -->
   <div id="modal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 id="modal-title">Nuevo Item</h3>
+        <h3 id="modal-title">Añadir Item del Catálogo</h3>
         <span class="close" onclick="cerrarModal()">&times;</span>
       </div>
       <div class="modal-body">
         <form id="inventario-form">
           <input type="hidden" id="id_inventario">
 
-          <div class="form-group">
-            <label>Nombre *</label>
-            <input type="text" id="nombre" required maxlength="15">
+          <div class="form-group" id="group-select-catalogo">
+            <label>Producto del Catálogo *</label>
+            <select id="id_catalogo" required>
+              <option value="">Cargando...</option>
+            </select>
+          </div>
+          
+          <div class="form-group" id="group-nombre-catalogo" style="display: none;">
+             <label>Producto del Catálogo</label>
+             <input type="text" id="nombre_catalogo_edit" readonly>
           </div>
 
           <div class="form-group">
-            <label>Cantidad *</label>
+            <label>Cantidad Inicial *</label>
             <input type="number" id="cantidad" required min="0">
+          </div>
+
+          <div class="form-group">
+            <label>Cantidad Mínima *</label>
+            <input type="number" id="cantidad_minima" value="10" required min="0">
           </div>
 
           <div class="form-actions">
@@ -88,24 +99,21 @@
     </div>
   </div>
 
-  <!-- Modal Actualizar Cantidad -->
   <div id="modal-cantidad" class="modal">
-    <div class="modal-content" style="max-width: 400px;">
+    <div class="modal-content">
       <div class="modal-header">
-        <h3>Actualizar Cantidad</h3>
+        <h3>Ajustar Cantidad</h3>
         <span class="close" onclick="cerrarModalCantidad()">&times;</span>
       </div>
       <div class="modal-body">
         <form id="cantidad-form">
           <input type="hidden" id="id_item_cantidad">
-          <p><strong>Item:</strong> <span id="nombre_item"></span></p>
-          <p><strong>Cantidad actual:</strong> <span id="cantidad_actual"></span></p>
-
+          <p>Ajustando stock para: <strong id="nombre_item"></strong></p>
+          <p>Cantidad actual: <span id="cantidad_actual"></span></p>
           <div class="form-group">
             <label>Nueva Cantidad *</label>
             <input type="number" id="nueva_cantidad" required min="0">
           </div>
-
           <div class="form-actions">
             <button type="button" onclick="cerrarModalCantidad()">Cancelar</button>
             <button type="submit">Actualizar</button>
@@ -129,19 +137,39 @@
     PermisosManager.mostrarInfoUsuario();
 
     let inventario = [];
+    let catalogo = [];
     let modoEdicion = false;
 
+    async function cargarDatos() {
+        await cargarInventario();
+        await cargarCatalogo();
+    }
+
     async function cargarInventario() {
-      inventario = await InventarioAPI.obtenerTodo();
-      if (!inventario) return;
+      const data = await InventarioAPI.obtenerTodo();
+      if (!data) return;
+      inventario = data;
       mostrarInventario();
+    }
+
+    async function cargarCatalogo() {
+        const data = await CatalogoAPI.obtenerTodos(); 
+        if (!data) return;
+        catalogo = data;
+
+        const select = document.getElementById('id_catalogo');
+        const idsEnInventario = inventario.map(item => item.id_catalogo);
+        const catalogoDisponible = catalogo.filter(c => !idsEnInventario.includes(c.id_catalogo));
+        
+        select.innerHTML = '<option value="">Seleccionar producto...</option>' +
+            catalogoDisponible.map(c => `<option value="${c.id_catalogo}">${c.nombre}</option>`).join('');
     }
 
     function mostrarInventario() {
       const tbody = document.getElementById('inventario-tbody');
       
       if (inventario.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No hay items en el inventario</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No hay items en el inventario</td></tr>';
         return;
       }
 
@@ -149,10 +177,10 @@
         let estadoClass = '';
         let estadoTexto = '';
         
-        if (item.cantidad < 10) {
+        if (item.cantidad <= item.cantidad_minima) {
           estadoClass = 'stock-bajo';
           estadoTexto = '🔴 Crítico';
-        } else if (item.cantidad < 50) {
+        } else if (item.cantidad < item.cantidad_minima * 2) {
           estadoClass = 'stock-medio';
           estadoTexto = '🟡 Medio';
         } else {
@@ -165,10 +193,11 @@
           <td>${item.id_inventario}</td>
           <td>${item.nombre}</td>
           <td>${item.cantidad}</td>
+          <td>${item.cantidad_minima}</td>
           <td>${estadoTexto}</td>
           <td>
-            <button class="btn-view" onclick="mostrarModalCantidad(${item.id_inventario})">Actualizar Cantidad</button>
-            <button class="btn-edit" onclick="editarItem(${item.id_inventario})">Editar</button>
+            <button class="btn-view" onclick="mostrarModalCantidad(${item.id_inventario})">Ajustar Cantidad</button>
+            <button class="btn-edit" onclick="editarItem(${item.id_inventario})">Editar Mínimos</button>
             <button class="btn-delete" onclick="eliminarItem(${item.id_inventario})">Eliminar</button>
           </td>
         </tr>
@@ -177,9 +206,15 @@
 
     function mostrarFormularioCrear() {
       modoEdicion = false;
-      document.getElementById('modal-title').textContent = 'Nuevo Item';
+      document.getElementById('modal-title').textContent = 'Añadir Item del Catálogo';
       document.getElementById('inventario-form').reset();
       document.getElementById('id_inventario').value = '';
+      
+      document.getElementById('group-select-catalogo').style.display = 'block';
+      document.getElementById('group-nombre-catalogo').style.display = 'none';
+      document.getElementById('cantidad').readOnly = false;
+      
+      cargarCatalogo();
       document.getElementById('modal').style.display = 'block';
     }
 
@@ -188,10 +223,16 @@
       if (!item) return;
 
       modoEdicion = true;
-      document.getElementById('modal-title').textContent = 'Editar Item';
+      document.getElementById('modal-title').textContent = 'Editar Item de Inventario';
       document.getElementById('id_inventario').value = item.id_inventario;
-      document.getElementById('nombre').value = item.nombre;
+
+      document.getElementById('group-select-catalogo').style.display = 'none';
+      document.getElementById('group-nombre-catalogo').style.display = 'block';
+      document.getElementById('nombre_catalogo_edit').value = item.nombre;
+      
       document.getElementById('cantidad').value = item.cantidad;
+      document.getElementById('cantidad').readOnly = true;
+      document.getElementById('cantidad_minima').value = item.cantidad_minima;
 
       document.getElementById('modal').style.display = 'block';
     }
@@ -214,7 +255,7 @@
       const resultado = await InventarioAPI.eliminar(id);
       if (resultado) {
         alert('Item eliminado correctamente');
-        cargarInventario();
+        cargarDatos();
       }
     }
 
@@ -231,27 +272,30 @@
     document.getElementById('inventario-form').addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const formData = {
-        nombre: document.getElementById('nombre').value,
-        cantidad: parseInt(document.getElementById('cantidad').value)
-      };
-
+      let formData = {};
       let resultado;
 
       if (modoEdicion) {
         const id = document.getElementById('id_inventario').value;
+        formData = {
+          cantidad_minima: parseInt(document.getElementById('cantidad_minima').value)
+        };
         resultado = await InventarioAPI.actualizar(id, formData);
         if (resultado) alert('Item actualizado correctamente');
+
       } else {
-        // NO GENERES id_inventario aquí
-        // MySQL lo generará automáticamente con AUTO_INCREMENT
+        formData = {
+          id_catalogo: parseInt(document.getElementById('id_catalogo').value),
+          cantidad: parseInt(document.getElementById('cantidad').value),
+          cantidad_minima: parseInt(document.getElementById('cantidad_minima').value)
+        };
         resultado = await InventarioAPI.crear(formData);
-        if (resultado) alert('Item creado correctamente');
+        if (resultado) alert('Item añadido al inventario correctamente');
       }
 
       if (resultado) {
         cerrarModal();
-        cargarInventario();
+        cargarDatos();
       }
     });
 
@@ -276,7 +320,7 @@
       if (event.target == modalCantidad) cerrarModalCantidad();
     }
 
-    cargarInventario();
+    cargarDatos();
   </script>
 </body>
 </html>

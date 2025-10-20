@@ -18,17 +18,20 @@ class PermisosManager {
 
   static esAdmin() {
     const empleado = this.obtenerEmpleado();
-    return empleado?.puesto === 'admin';
+    // **CAMBIO**: Se usa toLowerCase() para una comparación robusta
+    return empleado?.puesto.toLowerCase() === 'admin';
   }
 
   static esDoctor() {
     const empleado = this.obtenerEmpleado();
-    return empleado?.puesto === 'doctor';
+    // **CAMBIO**: Se usa toLowerCase()
+    return empleado?.puesto.toLowerCase() === 'doctor';
   }
 
   static esEnfermero() {
     const empleado = this.obtenerEmpleado();
-    return empleado?.puesto === 'enfermero';
+    // **CAMBIO**: Se usa toLowerCase() y se corrige el nombre del rol
+    return empleado?.puesto.toLowerCase() === 'enfermero/a';
   }
 
   static obtenerIdEmpleado() {
@@ -37,25 +40,21 @@ class PermisosManager {
   }
 
   static aplicarPermisosNavbar() {
-    // Ocultar empleados si no tiene permiso (solo admin)
     if (!this.tienePermiso('empleados')) {
       const navEmpleados = document.getElementById('nav-empleados');
       if (navEmpleados) navEmpleados.style.display = 'none';
     }
 
-    // Ocultar inventario si no tiene permiso (solo admin)
     if (!this.tienePermiso('inventario')) {
       const navInventario = document.getElementById('nav-inventario');
       if (navInventario) navInventario.style.display = 'none';
     }
 
-    // Ocultar pacientes si no tiene permiso
     if (!this.tienePermiso('pacientes')) {
       const navPacientes = document.getElementById('nav-pacientes');
       if (navPacientes) navPacientes.style.display = 'none';
     }
-
-    // Ocultar cirugías si no tiene permiso (admin, doctor y enfermero tienen acceso)
+    
     if (!this.tienePermiso('cirugias')) {
       const navCirugias = document.getElementById('nav-cirugias');
       if (navCirugias) navCirugias.style.display = 'none';

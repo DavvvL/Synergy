@@ -3,12 +3,13 @@ const router = express.Router();
 const EmpleadoController = require('../controllers/empleadoController');
 const { verificarAuth, verificarPermiso, soloAdmin } = require('../middlewares/authMiddleware');
 
-// Todas las rutas de empleados requieren autenticación
+// Todas las rutas requieren autenticación
 router.use(verificarAuth);
 
-// Rutas de opciones (disponibles para admin)
-router.get('/opciones/puestos', verificarPermiso('empleados'), EmpleadoController.obtenerPuestos);
-router.get('/opciones/equipos', verificarPermiso('empleados'), EmpleadoController.obtenerEquipos);
+// Rutas de opciones - Accesibles para usuarios autenticados (sin restricción de permisos)
+// Cualquiera autenticado puede ver puestos y equipos
+router.get('/opciones/puestos', EmpleadoController.obtenerPuestos);
+router.get('/opciones/equipos', EmpleadoController.obtenerEquipos);
 
 // CRUD de empleados (solo admin)
 router.get('/', soloAdmin, EmpleadoController.obtenerTodos);

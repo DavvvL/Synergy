@@ -16,6 +16,7 @@ const empleadoRoutes = require('./routes/empleadoRoutes');
 const pacienteRoutes = require('./routes/pacienteRoutes');
 const cirugiaRoutes = require('./routes/cirugiaRoutes');
 const inventarioRoutes = require('./routes/inventarioRoutes');
+const catalogoRoutes = require('./routes/catalogoRoutes'); // <-- 1. IMPORTA LA NUEVA RUTA
 
 // Usar rutas
 app.use('/api/auth', authRoutes);
@@ -24,6 +25,7 @@ app.use('/api/empleados', empleadoRoutes);
 app.use('/api/pacientes', pacienteRoutes);
 app.use('/api/cirugias', cirugiaRoutes);
 app.use('/api/inventario', inventarioRoutes);
+app.use('/api/catalogo', catalogoRoutes); // <-- 2. USA LA NUEVA RUTA
 
 // Ruta principal
 app.get('/', (req, res) => {

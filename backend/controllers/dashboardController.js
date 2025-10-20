@@ -2,36 +2,48 @@ const db = require('../config/db');
 
 class DashboardController {
   static obtenerEstadisticas(req, res) {
-    const puesto = req.empleado.puesto;
+    const puesto = req.empleado.puesto.toLowerCase();
     
-    // Queries base
+    // Queries base adaptadas a PostgreSQL
     const queries = {
       totalPacientes: 'SELECT COUNT(*) as total FROM pacientes',
-      cirugiasHoy: `SELECT COUNT(*) as total FROM cirujias 
-                    WHERE DATE(fecha_inicio) = CURDATE() AND estado != 'cancelada'`,
-      cirugiasPendientes: `SELECT COUNT(*) as total FROM cirujias 
-                          WHERE estado = 'programada' AND fecha_inicio > NOW()`,
-      proximasCirugias: `SELECT c.*, p.nombre, p.paterno, p.materno, 
-                         q.nombre as quirofano, e.nombre_equipo, tc.nombre as tipo_nombre
-                         FROM cirujias c
-                         LEFT JOIN pacientes p ON c.id_paciente = p.id_paciente
-                         LEFT JOIN quirofanos q ON c.id_quirofano = q.id_quirofano
-                         LEFT JOIN equipos e ON c.id_equipo = e.id_equipo
-                         LEFT JOIN tipo_cirujia tc ON c.id_tipo_cirujia = tc.id_tipo_cirujia
-                         WHERE c.estado = 'programada' 
-                         AND c.fecha_inicio > NOW()
-                         ORDER BY c.fecha_inicio ASC
-                         LIMIT 5`
+      cirugiasHoy: `SELECT COUNT(*) as total FROM cirugias 
+                    WHERE DATE(fecha_inicio) = CURRENT_DATE AND estado != 'Cancelada'`,
+      cirugiasPendientes: `SELECT COUNT(*) as total FROM cirugias 
+                           WHERE estado = 'Programada' AND fecha_inicio > NOW()`,
+      
+      // ==================================================================
+      // ESTA ES LA CONSULTA CLAVE PARA LAS 5 PRÓXIMAS CIRUGÍAS
+      // ==================================================================
+      proximasCirugias: `
+        SELECT 
+          c.*, 
+          p.nombre, 
+          p.paterno, 
+          p.materno, 
+          q.nombre as quirofano, 
+          e.nombre_equipo, 
+          tc.nombre as tipo_nombre
+        FROM cirugias c
+        LEFT JOIN pacientes p ON c.id_paciente = p.id_paciente
+        LEFT JOIN quirofanos q ON c.id_quirofano = q.id_quirofano
+        LEFT JOIN equipos e ON c.id_equipo = e.id_equipo
+        LEFT JOIN tipo_cirugia tc ON c.id_tipo_cirugia = tc.id_tipo_cirugia
+        WHERE c.estado = 'Programada' 
+          AND c.fecha_inicio > NOW() -- Solo cirugías en el futuro
+        ORDER BY c.fecha_inicio ASC -- Ordena por la más próxima primero
+        LIMIT 5 -- Limita el resultado a 5
+      `
     };
 
     // Agregar queries específicas según el rol
     if (puesto === 'admin') {
-      queries.totalEmpleados = 'SELECT COUNT(*) as total FROM empleados WHERE activo = 1';
-      queries.itemsBajoStock = 'SELECT COUNT(*) as total FROM inventario WHERE cantidad < 10';
+      queries.totalEmpleados = 'SELECT COUNT(*) as total FROM empleados WHERE activo = true';
+      queries.itemsBajoStock = 'SELECT COUNT(*) as total FROM inventario WHERE cantidad < cantidad_minima';
     }
 
-    if (puesto === 'enfermero') {
-      queries.itemsBajoStock = 'SELECT COUNT(*) as total FROM inventario WHERE cantidad < 10';
+    if (puesto === 'enfermero/a') {
+      queries.itemsBajoStock = 'SELECT COUNT(*) as total FROM inventario WHERE cantidad < cantidad_minima';
     }
 
     const estadisticas = {};
@@ -42,18 +54,17 @@ class DashboardController {
       db.query(query, (err, results) => {
         if (err) {
           console.error(`Error en query ${key}:`, err);
-          estadisticas[key] = key === 'proximasCirugias' ? [] : 0;
+          estadisticas[key] = key === 'proximasCirugias' ? [] : { total: 0 };
         } else {
           if (key === 'proximasCirugias') {
-            estadisticas[key] = results;
+            estadisticas[key] = results.rows;
           } else {
-            estadisticas[key] = results[0].total;
+            estadisticas[key] = results.rows[0].total;
           }
         }
 
         completadas++;
         if (completadas === totalQueries) {
-          // Agregar información del rol
           estadisticas.rolEmpleado = puesto;
           estadisticas.nombreEmpleado = `${req.empleado.nombre} ${req.empleado.paterno}`;
           res.json(estadisticas);
@@ -63,11 +74,11 @@ class DashboardController {
   }
 
   static obtenerCirugiasPorEstado(req, res) {
+    // Se usa DATE_TRUNC para obtener el mes actual
     const query = `
       SELECT estado, COUNT(*) as cantidad
-      FROM cirujias
-      WHERE MONTH(fecha_inicio) = MONTH(CURDATE())
-      AND YEAR(fecha_inicio) = YEAR(CURDATE())
+      FROM cirugias
+      WHERE DATE_TRUNC('month', fecha_inicio) = DATE_TRUNC('month', CURRENT_DATE)
       GROUP BY estado
     `;
 
@@ -76,13 +87,12 @@ class DashboardController {
         console.error('Error al obtener cirugías por estado:', err);
         return res.status(500).json({ error: 'Error al obtener datos' });
       }
-      res.json(results);
+      res.json(results.rows);
     });
   }
 
   static obtenerEmpleadosPorPuesto(req, res) {
-    // Solo admin puede ver esta información
-    if (req.empleado.puesto !== 'admin') {
+    if (req.empleado.puesto.toLowerCase() !== 'admin') {
       return res.status(403).json({ 
         error: 'Acceso denegado',
         message: 'Solo los administradores pueden ver estadísticas de empleados'
@@ -92,7 +102,7 @@ class DashboardController {
     const query = `
       SELECT puesto, COUNT(*) as cantidad
       FROM empleados
-      WHERE activo = 1
+      WHERE activo = true
       GROUP BY puesto
     `;
 
@@ -101,13 +111,13 @@ class DashboardController {
         console.error('Error al obtener empleados por puesto:', err);
         return res.status(500).json({ error: 'Error al obtener datos' });
       }
-      res.json(results);
+      res.json(results.rows);
     });
   }
 
   static obtenerInventarioCritico(req, res) {
-    // Solo admin y enfermero pueden ver inventario
-    if (req.empleado.puesto === 'doctor') {
+    const puesto = req.empleado.puesto.toLowerCase();
+    if (puesto === 'doctor') {
       return res.status(403).json({ 
         error: 'Acceso denegado',
         message: 'No tienes permisos para ver el inventario'
@@ -115,9 +125,11 @@ class DashboardController {
     }
 
     const query = `
-      SELECT * FROM inventario
-      WHERE cantidad < 10
-      ORDER BY cantidad ASC
+      SELECT i.*, c.nombre as nombre_catalogo, c.descripcion 
+      FROM inventario i
+      JOIN catalogo c ON i.id_catalogo = c.id_catalogo
+      WHERE i.cantidad < i.cantidad_minima
+      ORDER BY i.cantidad ASC
       LIMIT 10
     `;
 
@@ -126,7 +138,7 @@ class DashboardController {
         console.error('Error al obtener inventario crítico:', err);
         return res.status(500).json({ error: 'Error al obtener datos' });
       }
-      res.json(results);
+      res.json(results.rows);
     });
   }
 }
