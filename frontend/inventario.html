@@ -6,9 +6,9 @@
   <title>Inventario - Clínica Synergy</title>
   <link rel="stylesheet" href="css/styles.css">
   <style>
-    .stock-bajo { background-color: #fee; }
-    .stock-medio { background-color: #ffa; }
-    .stock-alto { background-color: #efe; }
+    .stock-alto { background-color: #e8f5e9; } /* Verde claro */
+    .stock-bajo { background-color: #fff3e0; } /* Amarillo claro */
+    .stock-critico { background-color: #ffebee; } /* Rojo claro */
  </style>
 </head>
 <body>
@@ -177,12 +177,15 @@
         let estadoClass = '';
         let estadoTexto = '';
         
-        if (item.cantidad <= item.cantidad_minima) {
-          estadoClass = 'stock-bajo';
+        const cantidad = parseInt(item.cantidad, 10);
+        const cantidadMinima = parseInt(item.cantidad_minima, 10);
+        
+        if (cantidad <= cantidadMinima / 2) {
+          estadoClass = 'stock-critico';
           estadoTexto = '🔴 Crítico';
-        } else if (item.cantidad < item.cantidad_minima * 2) {
-          estadoClass = 'stock-medio';
-          estadoTexto = '🟡 Medio';
+        } else if (cantidad <= cantidadMinima) {
+          estadoClass = 'stock-bajo';
+          estadoTexto = '🟡 Bajo';
         } else {
           estadoClass = 'stock-alto';
           estadoTexto = '🟢 Bueno';
@@ -192,8 +195,8 @@
         <tr class="${estadoClass}">
           <td>${item.id_inventario}</td>
           <td>${item.nombre}</td>
-          <td>${item.cantidad}</td>
-          <td>${item.cantidad_minima}</td>
+          <td>${cantidad}</td>
+          <td>${cantidadMinima}</td>
           <td>${estadoTexto}</td>
           <td>
             <button class="btn-view" onclick="mostrarModalCantidad(${item.id_inventario})">Ajustar Cantidad</button>

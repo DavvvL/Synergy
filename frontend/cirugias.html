@@ -3,19 +3,188 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cirugías - Clínica Synergy</title>
+  <title>Horario de Cirugías - Clínica Synergy</title>
   <link rel="stylesheet" href="css/styles.css">
   <style>
-    .estado-badge {
-      padding: 0.3rem 0.8rem;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 500;
+    /* Estilos para el nuevo horario */
+    .schedule-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      background: white;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
-    .estado-programada { background: #3498db; color: white; }
-    .estado-en-proceso { background: #f39c12; color: white; }
-    .estado-completada { background: #27ae60; color: white; }
-    .estado-cancelada { background: #e74c3c; color: white; }
+    .schedule-controls input[type="date"] {
+      padding: 0.5rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    .schedule-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      overflow-x: auto;
+    }
+
+    .schedule-grid {
+      display: flex;
+      min-width: 800px;
+    }
+
+    .time-column {
+      flex: 0 0 80px;
+      padding-top: 40px;
+    }
+
+    .time-label {
+      height: 60px;
+      text-align: center;
+      color: #95a5a6;
+      font-size: 0.9rem;
+      position: relative;
+    }
+    .time-label::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 10%;
+      width: 80%;
+      height: 1px;
+      background: #f0f0f0;
+    }
+
+    .schedule-column {
+      flex: 1;
+      border-left: 1px solid #f0f0f0;
+      position: relative;
+    }
+
+    .schedule-header {
+      text-align: center;
+      padding: 0.75rem;
+      font-weight: 600;
+      color: #2c3e50;
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 10;
+      height: 40px;
+    }
+
+    .surgery-block {
+      position: absolute;
+      width: 90%;
+      left: 5%;
+      background-color: #3498db;
+      color: white;
+      border-radius: 8px;
+      padding: 0.5rem;
+      font-size: 0.85rem;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .surgery-block:hover {
+      background-color: #2980b9;
+      transform: scale(1.02);
+      z-index: 20;
+    }
+    .surgery-block .title { font-weight: bold; }
+
+    /* Estilos para el formulario del modal */
+    .step, .view-mode-content, .edit-mode-content { display: none; }
+    .modal.creacion-mode .step { display: block; }
+    .modal.view-mode .view-mode-content { display: block; }
+    .modal.edit-mode .edit-mode-content { display: block; }
+    
+    #horas-disponibles-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    #horas-disponibles-container button {
+      padding: 0.75rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      background: #fff;
+      transition: all 0.2s;
+    }
+
+    #horas-disponibles-container button:hover:not(:disabled) {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
+    #horas-disponibles-container button:disabled {
+      background: #f0f0f0;
+      color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .info-group {
+      margin-bottom: 1rem;
+    }
+    
+    .info-group label {
+      font-weight: 500;
+      color: #95a5a6;
+      font-size: 0.9rem;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .info-group p {
+      font-size: 1.1rem;
+      color: #2c3e50;
+      margin: 0;
+    }
+
+    .searchable-select-container {
+      position: relative;
+    }
+    .searchable-select-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1001;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .searchable-select-dropdown .item {
+      padding: 0.75rem;
+      cursor: pointer;
+    }
+    .searchable-select-dropdown .item:hover {
+      background-color: #f8f9fa;
+    }
+    .searchable-select-dropdown .empty {
+      padding: 0.75rem;
+      color: #95a5a6;
+    }
+    .creacion-mode #step1.active, .creacion-mode #step2.active { display: block; }
   </style>
 </head>
 <body>
@@ -42,285 +211,508 @@
   </nav>
 
   <div class="container">
-    <div class="page-header">
-      <h2>🔬 Gestión de Cirugías</h2>
-      <button class="btn-primary" onclick="mostrarFormularioCrear()">+ Nueva Cirugía</button>
+    <div class="schedule-controls">
+      <div class="page-header" style="margin: 0;"><h2>🗓️ Horario de Quirófanos</h2></div>
+      <div>
+        <input type="date" id="date-picker">
+        <button class="btn-primary" onclick="mostrarModalCreacion()">+ Agendar Cirugía</button>
+      </div>
     </div>
-
-    <div class="table-container">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Paciente</th>
-            <th>Fecha Inicio</th>
-            <th>Quirófano</th>
-            <th>Equipo</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="cirugias-tbody">
-          <tr><td colspan="7" class="text-center">Cargando...</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <div id="schedule-container" class="schedule-container"></div>
   </div>
 
-  <!-- Modal -->
-  <div id="modal" class="modal">
+  <div id="modal-cirugia" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 id="modal-title">Nueva Cirugía</h3>
-        <span class="close" onclick="cerrarModal()">&times;</span>
+        <h3 id="cirugia-modal-title">Detalles</h3>
+        <span class="close" onclick="cerrarModalCirugia()">&times;</span>
       </div>
       <div class="modal-body">
-        <form id="cirugia-form">
-          <input type="hidden" id="id_cirugia">
-
-          <div class="form-group">
-            <label>Paciente *</label>
-            <select id="id_paciente" required>
-              <option value="">Cargando...</option>
-            </select>
+        
+        <div class="view-mode-content">
+          <div class="detail-grid">
+            <div class="info-group"><label>Paciente</label><p id="view-paciente"></p></div>
+            <div class="info-group"><label>Tipo de Cirugía</label><p id="view-tipo"></p></div>
+            <div class="info-group"><label>Fecha y Hora de Inicio</label><p id="view-fecha-inicio"></p></div>
+            <div class="info-group"><label>Fecha de Fin Estimada</label><p id="view-fecha-fin"></p></div>
+            <div class="info-group"><label>Quirófano</label><p id="view-quirofano"></p></div>
+            <div class="info-group"><label>Equipo</label><p id="view-equipo"></p></div>
+            <div class="info-group"><label>Estado</label><p id="view-estado"></p></div>
           </div>
-
-          <div class="form-group">
-            <label>Quirófano *</label>
-            <select id="id_quirofano" required>
-              <option value="">Cargando...</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>Tipo de Cirugía *</label>
-            <select id="id_tipo_cirugia" required>
-              <option value="">Cargando...</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>Equipo *</label>
-            <select id="id_equipo" required>
-              <option value="">Cargando...</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>Fecha y Hora de Inicio *</label>
-            <input type="datetime-local" id="fecha_inicio" required>
-          </div>
-
-          <div class="form-group">
-            <label>Motivo *</label>
-            <input type="text" id="motivo" required maxlength="60">
-          </div>
-
-          <div class="form-group">
-            <label>Descripción</label>
-            <textarea id="descripcion" maxlength="255" rows="3"></textarea>
-          </div>
-
-          <div class="form-group">
-            <label>Estado *</label>
-            <select id="estado" required>
-              <option value="programada">Programada</option>
-              <option value="en-proceso">En Proceso</option>
-              <option value="completada">Completada</option>
-              <option value="cancelada">Cancelada</option>
-            </select>
-          </div>
-
+          <div class="info-group"><label>Motivo</label><p id="view-motivo"></p></div>
+          <div class="info-group"><label>Descripción</label><p id="view-descripcion"></p></div>
           <div class="form-actions">
-            <button type="button" onclick="cerrarModal()">Cancelar</button>
-            <button type="submit">Guardar</button>
+            <button type="button" class="btn-delete" id="btn-eliminar-vista">Eliminar</button>
+            <button type="button" class="btn-primary" id="btn-ir-a-editar">Editar Cirugía</button>
           </div>
-        </form>
+        </div>
+
+        <div class="edit-mode-content">
+          <form id="cirugia-form-editar">
+            <input type="hidden" id="id_cirugia_editar">
+            <div class="form-group">
+              <label>Fecha y Hora de Inicio *</label>
+              <input type="datetime-local" id="fecha_inicio_editar" required>
+            </div>
+            <div class="form-group">
+              <label>Paciente *</label>
+              <div class="searchable-select-container" id="paciente-search-editar-container">
+                <input type="text" id="paciente-search-editar" class="searchable-input" autocomplete="off" placeholder="Buscar por nombre...">
+                <input type="hidden" id="id_paciente_editar" required>
+                <div class="searchable-select-dropdown"></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Equipo *</label>
+              <select id="id_equipo_editar" required></select>
+            </div>
+            <div class="form-group">
+              <label>Tipo de Cirugía *</label>
+              <select id="id_tipo_cirugia_editar" required></select>
+            </div>
+            <div class="form-group">
+              <label>Quirófano *</label>
+              <select id="id_quirofano_editar" required></select>
+            </div>
+            <div class="form-group">
+              <label>Motivo *</label>
+              <input type="text" id="motivo_editar" required maxlength="60">
+            </div>
+            <div class="form-group">
+              <label>Descripción</label>
+              <textarea id="descripcion_editar" maxlength="255" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Estado *</label>
+              <select id="estado_editar" required>
+                <option value="Programada">Programada</option>
+                <option value="Progreso">En Progreso</option>
+                <option value="Finalizada">Finalizada</option>
+                <option value="Cancelada">Cancelada</option>
+              </select>
+            </div>
+            <div class="form-actions">
+              <button type="button" onclick="mostrarDetallesCirugia()">Volver a Detalles</button>
+              <button type="submit">Guardar Cambios</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="creacion-mode">
+          <form id="cirugia-form-crear">
+            <div id="step1" class="step">
+              <div class="form-group">
+                <label>1. Seleccione el Tipo de Cirugía *</label>
+                <select id="id_tipo_cirugia_crear"></select>
+              </div>
+              <div class="form-group">
+                <label>2. Seleccione el Quirófano *</label>
+                <select id="id_quirofano_crear"></select>
+              </div>
+              <div id="horas-disponibles-container"></div>
+            </div>
+            <div id="step2" class="step">
+              <input type="hidden" id="fecha_inicio_hidden">
+              <p><strong>Fecha y Hora seleccionada:</strong> <span id="fecha-hora-seleccionada"></span></p>
+              <hr class="mb-3">
+              <div class="form-group">
+                <label>Paciente *</label>
+                <div class="searchable-select-container" id="paciente-search-crear-container">
+                  <input type="text" id="paciente-search-crear" class="searchable-input" autocomplete="off" placeholder="Buscar por nombre...">
+                  <input type="hidden" id="id_paciente_crear">
+                  <div class="searchable-select-dropdown"></div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Equipo *</label>
+                <select id="id_equipo_crear"></select>
+              </div>
+              <div class="form-group">
+                <label>Motivo *</label>
+                <input type="text" id="motivo_crear" maxlength="60">
+              </div>
+              <div class="form-actions">
+                <button type="button" onclick="volverAPaso1()">Atrás</button>
+                <button type="submit">Agendar Cirugía</button>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
-
+  
   <script src="js/auth.js"></script>
   <script src="js/permisos.js"></script>
   <script src="js/api.js"></script>
   <script>
+    // --- Lógica de Autenticación y Permisos ---
     verificarSesion();
-    if (!PermisosManager.tienePermiso('cirugias')) {
-      alert('No tienes permisos para acceder a esta página');
-      window.location.href = 'dashboard.html';
-    }
-
     PermisosManager.aplicarPermisosNavbar();
     PermisosManager.mostrarInfoUsuario();
 
+    // --- Variables Globales ---
     let cirugias = [];
-    let pacientes = [];
     let quirofanos = [];
     let tiposCirugia = [];
     let equipos = [];
-    let modoEdicion = false;
+    let pacientes = [];
+    let currentDate = new Date();
+    let modoEdicionCirugia = false;
 
+    // --- Lógica de Carga de Datos ---
     async function cargarDatos() {
-      await Promise.all([
-        cargarCirugias(),
-        cargarPacientes(),
-        cargarQuirofanos(),
-        cargarTiposCirugia(),
-        cargarEquipos()
-      ]);
-    }
-
-    async function cargarCirugias() {
-      cirugias = await CirugiasAPI.obtenerTodas();
-      if (!cirugias) return;
-      mostrarCirugias();
-    }
-
-    async function cargarPacientes() {
-      pacientes = await PacientesAPI.obtenerTodos();
-      if (!pacientes) return;
-      const select = document.getElementById('id_paciente');
-      select.innerHTML = '<option value="">Seleccionar paciente...</option>' +
-        pacientes.map(p => `<option value="${p.id_paciente}">${p.nombre} ${p.paterno} ${p.materno || ''}</option>`).join('');
-    }
-
-    async function cargarQuirofanos() {
-      quirofanos = await CirugiasAPI.obtenerQuirofanos();
-      if (!quirofanos) return;
-      const select = document.getElementById('id_quirofano');
-      select.innerHTML = '<option value="">Seleccionar quirófano...</option>' +
-        quirofanos.map(q => `<option value="${q.id_quirofano}">${q.nombre}</option>`).join('');
-    }
-
-    async function cargarTiposCirugia() {
-      tiposCirugia = await CirugiasAPI.obtenerTipos();
-      if (!tiposCirugia) return;
-      const select = document.getElementById('id_tipo_cirugia');
-      select.innerHTML = '<option value="">Seleccionar tipo...</option>' +
-        tiposCirugia.map(t => `<option value="${t.id_tipo_cirugia}">${t.nombre}</option>`).join('');
-    }
-
-    async function cargarEquipos() {
-      equipos = await EmpleadosAPI.obtenerEquipos();
-      if (!equipos) return;
-      const select = document.getElementById('id_equipo');
-      select.innerHTML = '<option value="">Seleccionar equipo...</option>' +
-        equipos.map(e => `<option value="${e.id_equipo}">${e.nombre_equipo}</option>`).join('');
-    }
-
-    function mostrarCirugias() {
-      const tbody = document.getElementById('cirugias-tbody');
+      const datePicker = document.getElementById('date-picker');
+      currentDate = new Date(datePicker.value + 'T00:00:00'); 
       
-      if (cirugias.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center">No hay cirugías registradas</td></tr>';
-        return;
+      const [dataCirugias, dataQuirofanos, dataTipos, dataEquipos, dataPacientes] = await Promise.all([
+        CirugiasAPI.obtenerTodas(),
+        CirugiasAPI.obtenerQuirofanos(),
+        CirugiasAPI.obtenerTipos(),
+        EmpleadosAPI.obtenerEquipos(),
+        PacientesAPI.obtenerTodos()
+      ]);
+
+      cirugias = dataCirugias || [];
+      quirofanos = dataQuirofanos || [];
+      tiposCirugia = dataTipos || [];
+      equipos = dataEquipos || [];
+      pacientes = dataPacientes || [];
+      
+      renderSchedule();
+      poblarSelectsModal();
+    }
+
+    // --- Lógica de Renderizado del Horario ---
+    function renderSchedule() {
+      const container = document.getElementById('schedule-container');
+      const cirugiasDelDia = cirugias.filter(c => new Date(c.fecha_inicio).toDateString() === currentDate.toDateString());
+      let gridHTML = '<div class="schedule-grid">';
+      gridHTML += '<div class="time-column">';
+      for(let i = 0; i < 24; i++){ gridHTML += `<div class="time-label">${i}:00</div>`; }
+      gridHTML += '</div>';
+      quirofanos.forEach(q => {
+        gridHTML += `<div class="schedule-column"><div class="schedule-header">${q.nombre}</div>`;
+        const cirugiasEnQuirofano = cirugiasDelDia.filter(c => c.id_quirofano === q.id_quirofano);
+        cirugiasEnQuirofano.forEach(c => {
+          const tipo = tiposCirugia.find(t => t.id_tipo_cirugia === c.id_tipo_cirugia);
+          const duracionHoras = tipo ? tipo.horas : 1;
+          const fechaInicio = new Date(c.fecha_inicio);
+          const horaInicio = fechaInicio.getHours();
+          const minutoInicio = fechaInicio.getMinutes();
+          const topPosition = (horaInicio * 60) + minutoInicio + 60;
+          const blockHeight = duracionHoras * 60;
+          
+          gridHTML += `
+            <div class="surgery-block" style="top: ${topPosition}px; height: ${blockHeight}px;" onclick="mostrarDetallesCirugia(${c.id_cirugia})">
+              <div class="title">${c.tipo_nombre || 'Cirugía'}</div>
+              <div>Paciente: ${c.paciente_nombre} ${c.paciente_paterno}</div>
+            </div>
+          `;
+        });
+        gridHTML += `</div>`;
+      });
+      gridHTML += `</div>`;
+      container.innerHTML = gridHTML;
+    }
+
+    function mostrarDetallesCirugia(id) {
+      if (id === undefined && cirugiaSeleccionadaId !== null) {
+        id = cirugiaSeleccionadaId;
+      } else {
+        cirugiaSeleccionadaId = id;
       }
 
-      tbody.innerHTML = cirugias.map(c => {
-        const fecha = new Date(c.fecha_inicio);
-        const fechaFormateada = fecha.toLocaleDateString('es-MX') + ' ' + fecha.toLocaleTimeString('es-MX', {hour: '2-digit', minute: '2-digit'});
-        
-        return `
-        <tr>
-          <td>${c.id_cirugia}</td>
-          <td>${c.paciente_nombre || 'N/A'} ${c.paciente_paterno || ''}</td>
-          <td>${fechaFormateada}</td>
-          <td>${c.quirofano_nombre || 'N/A'}</td>
-          <td>${c.nombre_equipo || 'N/A'}</td>
-          <td><span class="estado-badge estado-${c.estado}">${c.estado}</span></td>
-          <td>
-            <button class="btn-edit" onclick="editarCirugia(${c.id_cirugia})">Editar</button>
-            <button class="btn-delete" onclick="eliminarCirugia(${c.id_cirugia})">Eliminar</button>
-          </td>
-        </tr>
-      `}).join('');
-    }
-
-    function mostrarFormularioCrear() {
-      modoEdicion = false;
-      document.getElementById('modal-title').textContent = 'Nueva Cirugía';
-      document.getElementById('cirugia-form').reset();
-      document.getElementById('id_cirugia').value = '';
-      document.getElementById('modal').style.display = 'block';
-    }
-
-    async function editarCirugia(id) {
-      const cirugia = cirugias.find(c => c.id_cirugia == id);
+      const cirugia = cirugias.find(c => c.id_cirugia === id);
       if (!cirugia) return;
 
-      modoEdicion = true;
-      document.getElementById('modal-title').textContent = 'Editar Cirugía';
-      document.getElementById('id_cirugia').value = cirugia.id_cirugia;
-      document.getElementById('id_paciente').value = cirugia.id_paciente;
-      document.getElementById('id_quirofano').value = cirugia.id_quirofano;
-      document.getElementById('id_tipo_cirugia').value = cirugia.id_tipo_cirugia;
-      document.getElementById('id_equipo').value = cirugia.id_equipo;
+      const modal = document.getElementById('modal-cirugia');
+      modal.classList.add('view-mode');
+      modal.classList.remove('edit-mode', 'creacion-mode');
+      document.getElementById('cirugia-modal-title').textContent = 'Detalles de la Cirugía';
+
+      const fechaInicio = new Date(cirugia.fecha_inicio);
+      const tipo = tiposCirugia.find(t => t.id_tipo_cirugia === cirugia.id_tipo_cirugia);
+      const duracionHoras = tipo ? tipo.horas : 1;
+      
+      // Se calcula la fecha de fin sumando los milisegundos de la duración
+      // 1 hora = 60 min * 60 seg * 1000 ms
+      const fechaFin = new Date(fechaInicio.getTime() + duracionHoras * 60 * 60 * 1000);
+
+      document.getElementById('view-paciente').textContent = `${cirugia.paciente_nombre} ${cirugia.paciente_paterno}`;
+      document.getElementById('view-fecha-inicio').textContent = fechaInicio.toLocaleString('es-MX', { dateStyle: 'long', timeStyle: 'short' });
+      document.getElementById('view-fecha-fin').textContent = fechaFin.toLocaleString('es-MX', { dateStyle: 'long', timeStyle: 'short' }); // <-- Mostrar fecha de fin
+      document.getElementById('view-tipo').textContent = cirugia.tipo_nombre;
+      document.getElementById('view-quirofano').textContent = cirugia.quirofano_nombre;
+      document.getElementById('view-equipo').textContent = cirugia.nombre_equipo;
+      document.getElementById('view-estado').textContent = cirugia.estado;
+      document.getElementById('view-motivo').textContent = cirugia.motivo || 'N/A';
+      document.getElementById('view-descripcion').textContent = cirugia.descripcion || 'Sin descripción.';
+      
+      document.getElementById('btn-ir-a-editar').onclick = () => entrarModoEdicion();
+      document.getElementById('btn-eliminar-vista').onclick = () => eliminarCirugia(id);
+      
+      modal.style.display = 'block';
+    }
+
+    function entrarModoEdicion() {
+      const cirugia = cirugias.find(c => c.id_cirugia === cirugiaSeleccionadaId);
+      if (!cirugia) return;
+
+      const modal = document.getElementById('modal-cirugia');
+      modal.classList.remove('view-mode', 'creacion-mode');
+      modal.classList.add('edit-mode');
+      document.getElementById('cirugia-modal-title').textContent = 'Editar Cirugía';
+
+      const paciente = pacientes.find(p => p.id_paciente === cirugia.id_paciente);
+      document.getElementById('paciente-search-editar').value = paciente ? `${paciente.nombre} ${paciente.paterno}` : '';
+      document.getElementById('id_paciente_editar').value = cirugia.id_paciente;
+
+      document.getElementById('id_cirugia_editar').value = cirugia.id_cirugia;
+      document.getElementById('id_paciente_editar').value = cirugia.id_paciente;
+      document.getElementById('id_equipo_editar').value = cirugia.id_equipo;
+      document.getElementById('id_tipo_cirugia_editar').value = cirugia.id_tipo_cirugia;
+      document.getElementById('id_quirofano_editar').value = cirugia.id_quirofano;
+      document.getElementById('motivo_editar').value = cirugia.motivo || '';
+      document.getElementById('descripcion_editar').value = cirugia.descripcion || '';
+      document.getElementById('estado_editar').value = cirugia.estado;
       
       const fecha = new Date(cirugia.fecha_inicio);
       const fechaLocal = new Date(fecha.getTime() - fecha.getTimezoneOffset() * 60000);
-      document.getElementById('fecha_inicio').value = fechaLocal.toISOString().slice(0, 16);
-      
-      document.getElementById('motivo').value = cirugia.motivo || '';
-      document.getElementById('descripcion').value = cirugia.descripcion || '';
-      document.getElementById('estado').value = cirugia.estado;
-
-      document.getElementById('modal').style.display = 'block';
+      document.getElementById('fecha_inicio_editar').value = fechaLocal.toISOString().slice(0, 16);
     }
-
+    
+    function mostrarModalCreacion() {
+      const modal = document.getElementById('modal-cirugia');
+      modal.classList.remove('view-mode', 'edit-mode');
+      modal.classList.add('creacion-mode');
+      document.getElementById('cirugia-modal-title').textContent = 'Agendar Nueva Cirugía';
+      
+      document.getElementById('cirugia-form-crear').reset();
+      document.getElementById('horas-disponibles-container').innerHTML = '<p class="text-muted">Seleccione tipo y quirófano para ver horas.</p>';
+      
+      // Asegurarse de que el Paso 1 sea el activo y sus campos sean requeridos
+      volverAPaso1();
+      
+      modal.style.display = 'block';
+    }
+    
+    function cerrarModalCirugia() {
+      document.getElementById('modal-cirugia').style.display = 'none';
+      cirugiaSeleccionadaId = null;
+    }
+    
     async function eliminarCirugia(id) {
       if (!confirm('¿Estás seguro de eliminar esta cirugía?')) return;
-
       const resultado = await CirugiasAPI.eliminar(id);
       if (resultado) {
         alert('Cirugía eliminada correctamente');
-        cargarCirugias();
+        cerrarModalCirugia();
+        cargarDatos();
       }
     }
 
-    function cerrarModal() {
-      document.getElementById('modal').style.display = 'none';
-      document.getElementById('cirugia-form').reset();
+    function setupSearchableSelect(containerId) {
+      const container = document.getElementById(containerId);
+      // **AQUÍ OCURRÍA EL ERROR**: container era null
+      if (!container) return; // Añadir esta guarda para seguridad
+      
+      const searchInput = container.querySelector('.searchable-input');
+      const hiddenInput = container.querySelector('input[type="hidden"]');
+      const dropdown = container.querySelector('.searchable-select-dropdown');
+
+      searchInput.addEventListener('input', () => {
+        const query = searchInput.value.toLowerCase();
+        const filteredPacientes = pacientes.filter(p => 
+          `${p.nombre} ${p.paterno}`.toLowerCase().includes(query)
+        );
+        
+        dropdown.innerHTML = '';
+        if (filteredPacientes.length > 0) {
+          filteredPacientes.forEach(p => {
+            const item = document.createElement('div');
+            item.className = 'item';
+            item.textContent = `${p.nombre} ${p.paterno} ${p.materno || ''}`;
+            item.dataset.id = p.id_paciente;
+            item.addEventListener('click', () => {
+              searchInput.value = item.textContent;
+              hiddenInput.value = item.dataset.id;
+              dropdown.style.display = 'none';
+            });
+            dropdown.appendChild(item);
+          });
+        } else {
+          dropdown.innerHTML = '<div class="empty">No se encontraron pacientes</div>';
+        }
+        dropdown.style.display = 'block';
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!container.contains(e.target)) {
+          dropdown.style.display = 'none';
+        }
+      });
+    }
+    
+    function poblarSelectsModal() {
+      const selectsData = [
+          { ids: ['id_tipo_cirugia_crear', 'id_tipo_cirugia_editar'], data: tiposCirugia, map: t => `<option value="${t.id_tipo_cirugia}" data-horas="${t.horas}">${t.nombre}</option>` },
+          { ids: ['id_quirofano_crear', 'id_quirofano_editar'], data: quirofanos, map: q => `<option value="${q.id_quirofano}">${q.nombre}</option>` },
+          { ids: ['id_equipo_crear', 'id_equipo_editar'], data: equipos, map: e => `<option value="${e.id_equipo}">${e.nombre_equipo}</option>` }
+      ];
+      selectsData.forEach(s => {
+          s.ids.forEach(id => {
+              const select = document.getElementById(id);
+              if(select) select.innerHTML = '<option value="">Seleccionar...</option>' + s.data.map(s.map).join('');
+          });
+      });
+      
+      setupSearchableSelect('paciente-search-crear-container');
+      setupSearchableSelect('paciente-search-editar-container');
     }
 
-    document.getElementById('cirugia-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    function generarHorasDisponibles() {
+      const tipoSelect = document.getElementById('id_tipo_cirugia_crear');
+      const quirofanoSelect = document.getElementById('id_quirofano_crear');
+      if (!tipoSelect.value || !quirofanoSelect.value) return;
 
-      const formData = {
-        id_paciente: parseInt(document.getElementById('id_paciente').value),
-        id_quirofano: parseInt(document.getElementById('id_quirofano').value),
-        id_tipo_cirugia: parseInt(document.getElementById('id_tipo_cirugia').value),
-        id_equipo: parseInt(document.getElementById('id_equipo').value),
-        fecha_inicio: document.getElementById('fecha_inicio').value,
-        motivo: document.getElementById('motivo').value,
-        descripcion: document.getElementById('descripcion').value || null,
-        estado: document.getElementById('estado').value
-      };
+      const duracion = parseInt(tipoSelect.options[tipoSelect.selectedIndex].getAttribute('data-horas'));
+      const horasContainer = document.getElementById('horas-disponibles-container');
+      horasContainer.innerHTML = '';
 
-      let resultado;
+      const idQuirofano = parseInt(quirofanoSelect.value);
+      const cirugiasDelDia = cirugias.filter(c => 
+          new Date(c.fecha_inicio).toDateString() === currentDate.toDateString() && c.id_quirofano === idQuirofano
+      );
 
-      if (modoEdicion) {
-        const id = document.getElementById('id_cirugia').value;
-        resultado = await CirugiasAPI.actualizar(id, formData);
-        if (resultado) alert('Cirugía actualizada correctamente');
-      } else {
-        // NO GENERES id_cirugia aquí
-        // MySQL lo generará automáticamente con AUTO_INCREMENT
-        resultado = await CirugiasAPI.crear(formData);
-        if (resultado) alert('Cirugía creada correctamente');
+      const horasOcupadas = new Set();
+      cirugiasDelDia.forEach(c => {
+          const tipo = tiposCirugia.find(t => t.id_tipo_cirugia === c.id_tipo_cirugia);
+          const duracionExistente = tipo ? tipo.horas : 1;
+          const horaInicio = new Date(c.fecha_inicio).getHours();
+          for (let i = 0; i < duracionExistente; i++) {
+              horasOcupadas.add(horaInicio + i);
+          }
+      });
+      
+      for (let hora = 0; hora < 24; hora++) {
+          let disponible = true;
+          for (let i = 0; i < duracion; i++) {
+              if (horasOcupadas.has(hora + i) || (hora + i) >= 24) {
+                  disponible = false;
+                  break;
+              }
+          }
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = `${hora}:00`;
+          btn.disabled = !disponible;
+          if(disponible) btn.onclick = () => seleccionarHora(hora);
+          horasContainer.appendChild(btn);
       }
+    }
 
-      if (resultado) {
-        cerrarModal();
-        cargarCirugias();
-      }
+    function seleccionarHora(hora) {
+      const fecha = new Date(currentDate);
+      fecha.setHours(hora, 0, 0, 0);
+      document.getElementById('fecha_inicio_hidden').value = fecha.toISOString();
+      document.getElementById('fecha-hora-seleccionada').textContent = fecha.toLocaleString('es-MX');
+      
+      // ======================================================
+      // INICIO DE LA CORRECCIÓN 1: Quitar 'required' al avanzar
+      // ======================================================
+      document.getElementById('id_tipo_cirugia_crear').required = false;
+      document.getElementById('id_quirofano_crear').required = false;
+
+      document.getElementById('id_paciente_crear').required = true;
+      document.getElementById('id_equipo_crear').required = true;
+      document.getElementById('motivo_crear').required = true;
+      // ======================================================
+      // FIN DE LA CORRECCIÓN 1
+      // ======================================================
+
+      document.getElementById('step1').classList.remove('active');
+      document.getElementById('step2').classList.add('active');
+    }
+
+    function volverAPaso1() {
+      // ======================================================
+      // INICIO DE LA CORRECCIÓN 2: Devolver 'required' al retroceder
+      // ======================================================
+      document.getElementById('id_tipo_cirugia_crear').required = true;
+      document.getElementById('id_quirofano_crear').required = true;
+
+      document.getElementById('id_paciente_crear').required = false;
+      document.getElementById('id_equipo_crear').required = false;
+      document.getElementById('motivo_crear').required = false;
+      // ======================================================
+      // FIN DE LA CORRECCIÓN 2
+      // ======================================================
+
+      document.getElementById('step1').classList.add('active');
+      document.getElementById('step2').classList.remove('active');
+    }
+    
+    // --- Event Listeners ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const datePicker = document.getElementById('date-picker');
+        datePicker.valueAsDate = new Date();
+        datePicker.addEventListener('change', cargarDatos);
+        
+        document.getElementById('id_tipo_cirugia_crear').addEventListener('change', generarHorasDisponibles);
+        document.getElementById('id_quirofano_crear').addEventListener('change', generarHorasDisponibles);
+
+        // Listener para el formulario de CREACIÓN
+        document.getElementById('cirugia-form-crear').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            // Este bloque estaba mal formateado. Ahora cada campo está en su propia línea.
+            const formData = {
+                id_paciente: parseInt(document.getElementById('id_paciente_crear').value),
+                id_quirofano: parseInt(document.getElementById('id_quirofano_crear').value),
+                id_tipo_cirugia: parseInt(document.getElementById('id_tipo_cirugia_crear').value),
+                id_equipo: parseInt(document.getElementById('id_equipo_crear').value),
+                fecha_inicio: document.getElementById('fecha_inicio_hidden').value,
+                motivo: document.getElementById('motivo_crear').value,
+                estado: 'Programada'
+            };
+            const resultado = await CirugiasAPI.crear(formData);
+            if (resultado) {
+                alert('Cirugía agendada correctamente');
+                cerrarModalCirugia();
+                cargarDatos();
+            }
+        });
+
+        // Listener para el formulario de EDICIÓN
+        document.getElementById('cirugia-form-editar').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('id_cirugia_editar').value;
+            const fechaLocalEditarValue = document.getElementById('fecha_inicio_editar').value;
+            if (!fechaLocalEditarValue) {
+                alert("Error: La fecha y hora de inicio no pueden estar vacías.");
+                return;
+            }
+            const formData = {
+                id_paciente: parseInt(document.getElementById('id_paciente_editar').value),
+                id_quirofano: parseInt(document.getElementById('id_quirofano_editar').value),
+                id_tipo_cirugia: parseInt(document.getElementById('id_tipo_cirugia_editar').value),
+                id_equipo: parseInt(document.getElementById('id_equipo_editar').value),
+                fecha_inicio: new Date(fechaLocalEditarValue).toISOString(),
+                motivo: document.getElementById('motivo_editar').value,
+                descripcion: document.getElementById('descripcion_editar').value || null,
+                estado: document.getElementById('estado_editar').value
+            };
+            const resultado = await CirugiasAPI.actualizar(id, formData);
+            if (resultado) {
+                alert('Cirugía actualizada correctamente');
+                cerrarModalCirugia();
+                cargarDatos();
+            }
+        });
+
+        cargarDatos();
     });
 
-    window.onclick = function(event) {
-      const modal = document.getElementById('modal');
-      if (event.target == modal) cerrarModal();
-    }
-
-    cargarDatos();
   </script>
 </body>
 </html>

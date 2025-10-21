@@ -122,7 +122,6 @@
   </style>
 </head>
 <body>
-  <!-- Navbar -->
   <nav class="navbar">
     <div class="navbar-brand">
       <img 
@@ -145,15 +144,12 @@
     </div>
   </nav>
 
-  <!-- Contenido Principal -->
   <div class="container">
-    <!-- Sección de Bienvenida -->
     <div class="welcome-section">
       <h2>Bienvenido, <span id="nombreCompleto"></span></h2>
       <p>Gestiona tu clínica desde un solo lugar</p>
     </div>
 
-    <!-- Estadísticas -->
     <div class="stats-grid">
       <div class="stat-card blue" id="card-pacientes">
         <h3>Pacientes</h3>
@@ -186,7 +182,6 @@
       </div>
     </div>
 
-    <!-- Próximas Cirugías -->
     <div class="card">
       <h3 style="margin-bottom: 1.5rem; color: #2c3e50;">📋 Próximas Cirugías</h3>
       <div id="proximas-cirugias" class="cirugias-list">
@@ -197,15 +192,12 @@
     </div>
   </div>
 
-  <!-- Scripts -->
   <script src="js/auth.js"></script>
   <script src="js/permisos.js"></script>
   <script src="js/api.js"></script>
   <script>
-    // Verificar sesión
     verificarSesion();
 
-    // Aplicar permisos y mostrar info del usuario
     PermisosManager.aplicarPermisosNavbar();
     PermisosManager.mostrarInfoUsuario();
 
@@ -213,18 +205,15 @@
     document.getElementById('nombreCompleto').textContent = 
       `${empleado.nombre} ${empleado.paterno}`;
 
-    // Cargar dashboard
     async function cargarDashboard() {
       try {
         const stats = await DashboardAPI.obtenerEstadisticas();
         if (!stats) return;
 
-        // Estadísticas comunes
         document.getElementById('total-pacientes').textContent = stats.totalPacientes || 0;
         document.getElementById('cirugias-hoy').textContent = stats.cirugiasHoy || 0;
         document.getElementById('cirugias-pendientes').textContent = stats.cirugiasPendientes || 0;
 
-        // Estadísticas específicas por rol
         if (stats.totalEmpleados !== undefined) {
           document.getElementById('total-empleados').textContent = stats.totalEmpleados;
           document.getElementById('card-empleados').style.display = 'block';
@@ -235,7 +224,6 @@
           document.getElementById('card-inventario').style.display = 'block';
         }
 
-        // Mostrar próximas cirugías
         mostrarProximasCirugias(stats.proximasCirugias || []);
       } catch (error) {
         console.error('Error al cargar dashboard:', error);
@@ -244,6 +232,9 @@
 
     function mostrarProximasCirugias(cirugias) {
       const container = document.getElementById('proximas-cirugias');
+
+      // La variable 'cirugias' que llega aquí ya viene filtrada por el backend.
+      // No es necesario volver a filtrar.
 
       if (cirugias.length === 0) {
         container.innerHTML = `
@@ -282,10 +273,7 @@
       }).join('');
     }
 
-    // Cargar datos al iniciar
     document.addEventListener('DOMContentLoaded', cargarDashboard);
-
-    // Auto-refresh cada 30 segundos
     setInterval(cargarDashboard, 30000);
   </script>
 </body>

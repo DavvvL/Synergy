@@ -1,4 +1,15 @@
-// api.js - Cliente API centralizado
+
+
+// js/api.js - Cliente API centralizado
+
+// **CAMBIO**: Se añade esta función para evitar errores
+function cerrarSesion() {
+  console.log('Cerrando sesión por error de API o sesión expirada...');
+  localStorage.removeItem('empleado');
+  localStorage.removeItem('permisos');
+  localStorage.removeItem('isLoggedIn');
+  window.location.href = 'index.html';
+}
 
 const API_BASE = 'http://localhost:3000/api';
 
@@ -25,7 +36,7 @@ class API {
 
       if (response.status === 401) {
         alert('Sesión expirada. Por favor, inicia sesión nuevamente.');
-        cerrarSesion();
+        cerrarSesion(); // Esta llamada ahora funcionará y no detendrá el script
         return null;
       }
 
@@ -104,7 +115,10 @@ const CirugiasAPI = {
   actualizar: (id, cirugia) => API.put(`/cirugias/${id}`, cirugia),
   eliminar: (id) => API.delete(`/cirugias/${id}`),
   obtenerTipos: () => API.get('/cirugias/opciones/tipos'),
-  obtenerQuirofanos: () => API.get('/cirugias/opciones/quirofanos')
+  obtenerQuirofanos: () => API.get('/cirugias/opciones/quirofanos'),
+  crearQuirofano: (quirofano) => API.post('/cirugias/quirofanos', quirofano),
+  actualizarQuirofano: (id, quirofano) => API.put(`/cirugias/quirofanos/${id}`, quirofano),
+  eliminarQuirofano: (id) => API.delete(`/cirugias/quirofanos/${id}`)
 };
 
 // API de Inventario

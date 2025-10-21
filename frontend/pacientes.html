@@ -5,9 +5,98 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pacientes - Clínica Synergy</title>
   <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* Estilos específicos para la nueva interfaz de pacientes */
+    .pacientes-container {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .pacientes-list-panel {
+      width: 400px;
+      flex-shrink: 0;
+    }
+
+    .pacientes-detail-panel {
+      flex-grow: 1;
+      display: none; /* Oculto por defecto */
+    }
+
+    #search-paciente {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    .paciente-list {
+      list-style: none;
+      height: 70vh;
+      overflow-y: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+    }
+
+    .paciente-list-item {
+      padding: 1rem;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .paciente-list-item:hover {
+      background-color: #f8f9fa;
+    }
+    
+    .paciente-list-item.active {
+      background-color: #e9ecef;
+      font-weight: bold;
+    }
+
+    .paciente-list-item div {
+      font-size: 1.1rem;
+      color: #2c3e50;
+      margin-bottom: 0.25rem;
+    }
+
+    .paciente-list-item span {
+      font-size: 0.9rem;
+      color: #7f8c8d;
+    }
+
+    .detail-view-content {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .detail-info {
+      flex-basis: 40%;
+    }
+    
+    .detail-history {
+      flex-basis: 60%;
+    }
+    
+    .info-group {
+      margin-bottom: 1rem;
+    }
+    
+    .info-group label {
+      font-weight: 500;
+      color: #95a5a6;
+      font-size: 0.9rem;
+      display: block;
+    }
+
+    .info-group p {
+      font-size: 1.1rem;
+      color: #2c3e50;
+    }
+  </style>
 </head>
 <body>
-  <!-- Navbar -->
   <nav class="navbar">
     <div class="navbar-brand">
       <img 
@@ -30,35 +119,81 @@
     </div>
   </nav>
 
-  <!-- Contenido Principal -->
   <div class="container">
     <div class="page-header">
       <h2>👥 Gestión de Pacientes</h2>
       <button class="btn-primary" onclick="mostrarFormularioCrear()">+ Nuevo Paciente</button>
     </div>
 
-    <!-- Tabla de Pacientes -->
-    <div class="table-container">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nombre Completo</th>
-            <th>Sexo</th>
-            <th>Edad</th>
-            <th>Teléfono</th>
-            <th>Contacto</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="pacientes-tbody">
-          <tr><td colspan="7" class="text-center">Cargando...</td></tr>
-        </tbody>
-      </table>
+    <div class="pacientes-container">
+      <div class="pacientes-list-panel card">
+        <input type="text" id="search-paciente" placeholder="Buscar por nombre...">
+        <ul id="pacientes-list" class="paciente-list">
+          <li class="empty-state">Cargando...</li>
+        </ul>
+      </div>
+
+      <div id="pacientes-detail-panel" class="pacientes-detail-panel">
+        <div class="card">
+            <div id="detail-view-placeholder" class="empty-state">
+                <p>Selecciona un paciente de la lista para ver sus detalles.</p>
+            </div>
+            <div id="detail-view-data" class="hidden">
+              <div class="page-header" style="margin-bottom: 1.5rem;">
+                <h3 id="detail-nombre"></h3>
+                <div>
+                  <button class="btn-edit" id="btn-editar">Editar</button>
+                  <button class="btn-delete" id="btn-eliminar">Eliminar</button>
+                </div>
+              </div>
+              <div class="detail-view-content">
+                <div class="detail-info">
+                  <h4>Datos Personales</h4>
+                  <hr class="mb-3">
+                  <div class="info-group">
+                    <label>ID Paciente</label>
+                    <p id="detail-id"></p>
+                  </div>
+                  <div class="info-group">
+                    <label>Sexo</label>
+                    <p id="detail-sexo"></p>
+                  </div>
+                  <div class="info-group">
+                    <label>Edad</label>
+                    <p id="detail-edad"></p>
+                  </div>
+                  <div class="info-group">
+                    <label>Teléfono</label>
+                    <p id="detail-telefono"></p>
+                  </div>
+                  <div class="info-group">
+                    <label>Contacto de Emergencia</label>
+                    <p id="detail-contacto"></p>
+                  </div>
+                </div>
+                <div class="detail-history">
+                  <h4>Historial de Cirugías</h4>
+                  <hr class="mb-3">
+                  <div class="table-container" style="max-height: 50vh; overflow-y: auto;">
+                    <table class="data-table">
+                      <thead>
+                        <tr>
+                          <th>Fecha</th>
+                          <th>Tipo</th>
+                          <th>Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody id="historial-cirugias-tbody"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Modal -->
   <div id="modal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -68,22 +203,18 @@
       <div class="modal-body">
         <form id="paciente-form">
           <input type="hidden" id="id_paciente">
-
           <div class="form-group">
             <label>Nombre *</label>
             <input type="text" id="nombre" required maxlength="20">
           </div>
-
           <div class="form-group">
             <label>Apellido Paterno *</label>
             <input type="text" id="paterno" required maxlength="20">
           </div>
-
           <div class="form-group">
             <label>Apellido Materno</label>
             <input type="text" id="materno" maxlength="20">
           </div>
-
           <div class="form-group">
             <label>Sexo *</label>
             <select id="sexo" required>
@@ -92,22 +223,18 @@
               <option value="Femenino">Femenino</option>
             </select>
           </div>
-
           <div class="form-group">
             <label>Edad *</label>
             <input type="number" id="edad" required min="0" max="120">
           </div>
-
           <div class="form-group">
             <label>Teléfono *</label>
             <input type="tel" id="telefono" required pattern="[0-9]{10}" placeholder="10 dígitos">
           </div>
-
           <div class="form-group">
             <label>Contacto de Emergencia</label>
             <input type="tel" id="contacto" pattern="[0-9]{10}" placeholder="10 dígitos">
           </div>
-
           <div class="form-actions">
             <button type="button" onclick="cerrarModal()">Cancelar</button>
             <button type="submit">Guardar</button>
@@ -116,8 +243,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Scripts -->
   <script src="js/auth.js"></script>
   <script src="js/permisos.js"></script>
   <script src="js/api.js"></script>
@@ -133,39 +258,100 @@
     PermisosManager.mostrarInfoUsuario();
 
     let pacientes = [];
+    let cirugias = [];
     let modoEdicion = false;
+    let pacienteSeleccionadoId = null;
 
-    // Cargar pacientes
+    // Cargar pacientes al iniciar
     async function cargarPacientes() {
-      pacientes = await PacientesAPI.obtenerTodos();
-      if (!pacientes) return;
-      mostrarPacientes();
+      const data = await PacientesAPI.obtenerTodos();
+      if (!data) return;
+      pacientes = data;
+      mostrarPacientesEnLista();
     }
 
-    function mostrarPacientes() {
-      const tbody = document.getElementById('pacientes-tbody');
-      
-      if (pacientes.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center">No hay pacientes registrados</td></tr>';
+    function mostrarPacientesEnLista(filtro = '') {
+      const ul = document.getElementById('pacientes-list');
+      const filtroLowerCase = filtro.toLowerCase();
+
+      const pacientesFiltrados = pacientes.filter(p => 
+        `${p.nombre} ${p.paterno}`.toLowerCase().includes(filtroLowerCase)
+      );
+
+      if (pacientesFiltrados.length === 0) {
+        ul.innerHTML = '<li class="empty-state">No se encontraron pacientes.</li>';
         return;
       }
 
-      tbody.innerHTML = pacientes.map(p => `
-        <tr>
-          <td>${p.id_paciente}</td>
-          <td>${p.nombre} ${p.paterno} ${p.materno || ''}</td>
-          <td>${p.sexo}</td>
-          <td>${p.edad}</td>
-          <td>${p.telefono}</td>
-          <td>${p.contacto || 'N/A'}</td>
-          <td>
-            <button class="btn-edit" onclick="editarPaciente(${p.id_paciente})">Editar</button>
-            <button class="btn-delete" onclick="eliminarPaciente(${p.id_paciente})">Eliminar</button>
-          </td>
-        </tr>
+      ul.innerHTML = pacientesFiltrados.map(p => `
+        <li class="paciente-list-item ${p.id_paciente === pacienteSeleccionadoId ? 'active' : ''}" onclick="seleccionarPaciente(${p.id_paciente})">
+          <div>${p.nombre} ${p.paterno} ${p.materno || ''}</div>
+          <span>${p.sexo} - ${p.edad} años</span>
+        </li>
       `).join('');
     }
 
+    async function seleccionarPaciente(id) {
+        pacienteSeleccionadoId = id;
+        mostrarPacientesEnLista(document.getElementById('search-paciente').value); // Resalta el item activo
+        
+        const detailPanel = document.getElementById('pacientes-detail-panel');
+        const placeholder = document.getElementById('detail-view-placeholder');
+        const dataView = document.getElementById('detail-view-data');
+
+        // Mostrar panel y loading
+        detailPanel.style.display = 'block';
+        placeholder.classList.remove('hidden');
+        placeholder.innerHTML = '<p>Cargando detalles...</p>';
+        dataView.classList.add('hidden');
+
+        // Cargar datos del paciente y su historial
+        const paciente = await PacientesAPI.obtenerPorId(id);
+        const todasLasCirugias = await CirugiasAPI.obtenerTodas();
+        
+        if (!paciente || !todasLasCirugias) {
+            placeholder.innerHTML = '<p>Error al cargar los datos del paciente.</p>';
+            return;
+        }
+
+        const historial = todasLasCirugias.filter(c => c.id_paciente === id);
+
+        // Poblar vista de detalles
+        document.getElementById('detail-id').textContent = paciente.id_paciente;
+        document.getElementById('detail-nombre').textContent = `${paciente.nombre} ${paciente.paterno}`;
+        document.getElementById('detail-sexo').textContent = paciente.sexo;
+        document.getElementById('detail-edad').textContent = `${paciente.edad} años`;
+        document.getElementById('detail-telefono').textContent = paciente.telefono;
+        document.getElementById('detail-contacto').textContent = paciente.contacto || 'No registrado';
+        
+        document.getElementById('btn-editar').onclick = () => editarPaciente(id);
+        document.getElementById('btn-eliminar').onclick = () => eliminarPaciente(id);
+
+        // Poblar historial de cirugías
+        const historialTbody = document.getElementById('historial-cirugias-tbody');
+        if(historial.length > 0) {
+            historialTbody.innerHTML = historial.map(c => `
+                <tr>
+                    <td>${new Date(c.fecha_inicio).toLocaleDateString('es-MX')}</td>
+                    <td>${c.tipo_nombre || 'No especificado'}</td>
+                    <td>${c.estado}</td>
+                </tr>
+            `).join('');
+        } else {
+            historialTbody.innerHTML = '<tr><td colspan="3" class="text-center">Sin cirugías registradas.</td></tr>';
+        }
+
+        // Mostrar datos y ocultar placeholder
+        placeholder.classList.add('hidden');
+        dataView.classList.remove('hidden');
+    }
+
+    // Lógica para el buscador
+    document.getElementById('search-paciente').addEventListener('input', (e) => {
+        mostrarPacientesEnLista(e.target.value);
+    });
+    
+    // ----- Lógica del Modal -----
     function mostrarFormularioCrear() {
       modoEdicion = false;
       document.getElementById('modal-title').textContent = 'Nuevo Paciente';
@@ -198,47 +384,50 @@
       const resultado = await PacientesAPI.eliminar(id);
       if (resultado) {
         alert('Paciente eliminado correctamente');
+        pacienteSeleccionadoId = null;
+        document.getElementById('pacientes-detail-panel').style.display = 'none';
         cargarPacientes();
       }
     }
 
     function cerrarModal() {
       document.getElementById('modal').style.display = 'none';
-      document.getElementById('paciente-form').reset();
     }
 
-    // Submit formulario
+    // Submit del formulario
     document.getElementById('paciente-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
+        e.preventDefault();
 
-      const formData = {
-        nombre: document.getElementById('nombre').value,
-        paterno: document.getElementById('paterno').value,
-        materno: document.getElementById('materno').value || null,
-        sexo: document.getElementById('sexo').value,
-        edad: parseInt(document.getElementById('edad').value),
-        telefono: parseInt(document.getElementById('telefono').value),
-        contacto: document.getElementById('contacto').value ? 
-                  parseInt(document.getElementById('contacto').value) : null
-      };
+        const formData = {
+            nombre: document.getElementById('nombre').value,
+            paterno: document.getElementById('paterno').value,
+            materno: document.getElementById('materno').value || null,
+            sexo: document.getElementById('sexo').value,
+            edad: parseInt(document.getElementById('edad').value),
+            telefono: document.getElementById('telefono').value,
+            contacto: document.getElementById('contacto').value || null,
+            creado: new Date().toISOString() // Añadir fecha de creación
+        };
 
-      let resultado;
+        let resultado;
 
-      if (modoEdicion) {
-        const id = document.getElementById('id_paciente').value;
-        resultado = await PacientesAPI.actualizar(id, formData);
-        if (resultado) alert('Paciente actualizado correctamente');
-      } else {
-        // NO GENERES id_paciente aquí
-        // MySQL lo generará automáticamente con AUTO_INCREMENT
-        resultado = await PacientesAPI.crear(formData);
-        if (resultado) alert('Paciente creado correctamente');
-      }
+        if (modoEdicion) {
+            const id = document.getElementById('id_paciente').value;
+            resultado = await PacientesAPI.actualizar(id, formData);
+            if (resultado) alert('Paciente actualizado correctamente');
+        } else {
+            resultado = await PacientesAPI.crear(formData);
+            if (resultado) alert('Paciente creado correctamente');
+        }
 
-      if (resultado) {
-        cerrarModal();
-        cargarPacientes();
-      }
+        if (resultado) {
+            cerrarModal();
+            cargarPacientes();
+            // Si se estaba viendo un paciente, se actualiza su vista
+            if (pacienteSeleccionadoId) {
+                seleccionarPaciente(pacienteSeleccionadoId);
+            }
+        }
     });
 
     // Cerrar modal al hacer clic fuera
@@ -246,8 +435,8 @@
       const modal = document.getElementById('modal');
       if (event.target == modal) cerrarModal();
     }
-
-    // Cargar al iniciar
+    
+    // Carga inicial
     cargarPacientes();
   </script>
 </body>

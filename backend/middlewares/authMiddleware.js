@@ -20,16 +20,15 @@ const verificarAuth = (req, res, next) => {
 
   // Verificar que el empleado existe y está activo
   db.query(
-    // **CAMBIO**: Se reemplaza ? por $1
-    'SELECT id_empleado, nombre, paterno, correo, puesto, activo FROM empleados WHERE id_empleado = $1',
+    'SELECT id_empleado, nombre, paterno, correo, puesto, activo, id_equipo FROM empleados WHERE id_empleado = $1',
     [idEmpleado],
     (err, results) => {
+  
       if (err) {
         console.error('Error al verificar autenticación:', err);
         return res.status(500).json({ error: 'Error en el servidor' });
       }
 
-      // Se usa results.rows y se verifica que el empleado esté activo
       if (results.rows.length === 0 || results.rows[0].activo !== true) {
         return res.status(401).json({ 
           error: 'No autorizado', 
@@ -37,7 +36,7 @@ const verificarAuth = (req, res, next) => {
         });
       }
 
-      // Agregar información del empleado a la request
+      // Ahora req.empleado incluirá el id_equipo
       req.empleado = results.rows[0];
       next();
     }

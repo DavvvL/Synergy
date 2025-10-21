@@ -9,12 +9,16 @@ class DashboardController {
       totalPacientes: 'SELECT COUNT(*) as total FROM pacientes',
       cirugiasHoy: `SELECT COUNT(*) as total FROM cirugias 
                     WHERE DATE(fecha_inicio) = CURRENT_DATE AND estado != 'Cancelada'`,
-      cirugiasPendientes: `SELECT COUNT(*) as total FROM cirugias 
-                           WHERE estado = 'Programada' AND fecha_inicio > NOW()`,
       
-      // ==================================================================
-      // ESTA ES LA CONSULTA CLAVE PARA LAS 5 PRÓXIMAS CIRUGÍAS
-      // ==================================================================
+      // ======================================================
+      // INICIO DE LA CORRECCIÓN 1
+      // ======================================================
+      cirugiasPendientes: `SELECT COUNT(*) as total FROM cirugias 
+                           WHERE estado = 'Programada' AND fecha_inicio > NOW()`, // Se cambió 'programada' a 'Programada'
+      // ======================================================
+      // FIN DE LA CORRECCIÓN 1
+      // ======================================================
+      
       proximasCirugias: `
         SELECT 
           c.*, 
@@ -29,10 +33,17 @@ class DashboardController {
         LEFT JOIN quirofanos q ON c.id_quirofano = q.id_quirofano
         LEFT JOIN equipos e ON c.id_equipo = e.id_equipo
         LEFT JOIN tipo_cirugia tc ON c.id_tipo_cirugia = tc.id_tipo_cirugia
-        WHERE c.estado = 'Programada' 
-          AND c.fecha_inicio > NOW() -- Solo cirugías en el futuro
-        ORDER BY c.fecha_inicio ASC -- Ordena por la más próxima primero
-        LIMIT 5 -- Limita el resultado a 5
+        
+        -- ======================================================
+        -- INICIO DE LA CORRECCIÓN 2
+        -- ======================================================
+        WHERE c.estado = 'Programada' -- Se cambió 'programada' a 'Programada'
+          AND c.fecha_inicio > NOW()
+        ORDER BY c.fecha_inicio ASC
+        LIMIT 5
+        -- ======================================================
+        -- FIN DE LA CORRECCIÓN 2
+        -- ======================================================
       `
     };
 
