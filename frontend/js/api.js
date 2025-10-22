@@ -95,7 +95,10 @@ const EmpleadosAPI = {
   actualizar: (id, empleado) => API.put(`/empleados/${id}`, empleado),
   eliminar: (id) => API.delete(`/empleados/${id}`),
   obtenerPuestos: () => API.get('/empleados/opciones/puestos'),
-  obtenerEquipos: () => API.get('/empleados/opciones/equipos')
+  obtenerEquipos: () => API.get('/empleados/opciones/equipos'),
+  crearEquipo: (equipo) => API.post('/empleados/equipos', equipo),
+  actualizarEquipo: (id, equipo) => API.put(`/empleados/equipos/${id}`, equipo),
+  eliminarEquipo: (id) => API.delete(`/empleados/equipos/${id}`)
 };
 
 // API de Pacientes

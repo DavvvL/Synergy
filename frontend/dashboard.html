@@ -70,6 +70,28 @@
       font-size: 1.1rem;
     }
 
+    .team-member-list {
+      list-style: none;
+      padding: 0;
+    }
+    .team-member-item {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .team-member-item:last-child {
+      border-bottom: none;
+    }
+    .team-member-item .puesto {
+      font-size: 0.8rem;
+      color: #7f8c8d;
+      margin-left: auto;
+      background: #ecf0f1;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+    }
+
     .cirugias-list {
       display: grid;
       gap: 1rem;
@@ -182,6 +204,14 @@
       </div>
     </div>
 
+    <div id="equipo-section" class="card" style="display: none;">
+      <h3 style="margin-bottom: 1.5rem; color: #2c3e50;">
+        👥 Miembros del Equipo: <span id="nombre-equipo" style="color: #3498db;"></span>
+      </h3>
+      <ul id="lista-miembros-equipo" class="team-member-list">
+        </ul>
+    </div>
+
     <div class="card">
       <h3 style="margin-bottom: 1.5rem; color: #2c3e50;">📋 Próximas Cirugías</h3>
       <div id="proximas-cirugias" class="cirugias-list">
@@ -223,10 +253,39 @@
           document.getElementById('items-bajo-stock').textContent = stats.itemsBajoStock;
           document.getElementById('card-inventario').style.display = 'block';
         }
-
+        
         mostrarProximasCirugias(stats.proximasCirugias || []);
       } catch (error) {
-        console.error('Error al cargar dashboard:', error);
+        console.error('Error al cargar estadísticas:', error);
+      }
+    }
+
+    async function cargarEquipoInfo() {
+      const rol = empleado.puesto.toLowerCase();
+      
+      // Mostrar solo para doctores y enfermeros
+      if (rol === 'doctor' || rol === 'enfermero/a') {
+        const equipoSection = document.getElementById('equipo-section');
+        equipoSection.style.display = 'block';
+
+        document.getElementById('nombre-equipo').textContent = empleado.nombre_equipo || 'Sin Asignar';
+
+        const todosLosEmpleados = await EmpleadosAPI.obtenerTodos();
+        if (!todosLosEmpleados) return;
+        
+        const miembrosDelEquipo = todosLosEmpleados.filter(e => e.id_equipo === empleado.id_equipo && e.activo);
+        const listaMiembros = document.getElementById('lista-miembros-equipo');
+
+        if (miembrosDelEquipo.length > 0) {
+          listaMiembros.innerHTML = miembrosDelEquipo.map(miembro => `
+            <li class="team-member-item">
+              <span class="nombre">${miembro.nombre} ${miembro.paterno}</span>
+              <span class="puesto">${miembro.puesto}</span>
+            </li>
+          `).join('');
+        } else {
+          listaMiembros.innerHTML = '<li class="empty-state" style="padding: 1rem;">No hay otros miembros en este equipo.</li>';
+        }
       }
     }
 
@@ -272,6 +331,17 @@
         `;
       }).join('');
     }
+
+    async function cargarPaginaCompleta() {
+      // Se ejecutan ambas funciones en paralelo para mayor eficiencia
+      await Promise.all([
+        cargarDashboard(),
+        cargarEquipoInfo()
+      ]);
+    }
+
+    // Se llama a la nueva función al cargar la página
+    document.addEventListener('DOMContentLoaded', cargarPaginaCompleta);
 
     document.addEventListener('DOMContentLoaded', cargarDashboard);
     setInterval(cargarDashboard, 30000);

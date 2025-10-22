@@ -84,6 +84,32 @@ class EmpleadoController {
       res.json(results.rows);
     });
   }
+  
+  static crearEquipo(req, res) {
+    const nuevoEquipo = req.body;
+    EmpleadoModel.crearEquipo(nuevoEquipo, (err, result) => {
+      if (err) { /* ... manejo de error ... */ }
+      const nuevoId = result.rows[0].id_equipo;
+      res.status(201).json({ id: nuevoId, ...nuevoEquipo });
+    });
+  }
+
+  static actualizarEquipo(req, res) {
+    const id = req.params.id;
+    const datos = req.body;
+    EmpleadoModel.actualizarEquipo(id, datos, (err) => {
+      if (err) { /* ... manejo de error ... */ }
+      res.json({ id, ...datos });
+    });
+  }
+
+  static eliminarEquipo(req, res) {
+    const id = req.params.id;
+    EmpleadoModel.eliminarEquipo(id, (err) => {
+      if (err) { /* ... manejo de error ... */ }
+      res.json({ success: true, message: 'Equipo eliminado' });
+    });
+  }
 }
 
 module.exports = EmpleadoController;

@@ -42,31 +42,61 @@ class CirugiaController {
 
   static crear(req, res) {
     const nuevaCirugia = req.body;
-    // La DB se encarga de los timestamps con DEFAULT y TRIGGERS
-    // No es necesario asignarlos aquí, pero no causa error si se dejan.
 
-    CirugiaModel.create(nuevaCirugia, (err, result) => {
-      if (err) {
-        console.error('Error al crear cirugía:', err);
-        return res.status(500).json({ error: 'Error al crear cirugía' });
+    // Obtener la duración del tipo de cirugía para calcular fecha_fin
+    CirugiaModel.getTipoById(nuevaCirugia.id_tipo_cirugia, (err, tipoResult) => {
+      if (err || tipoResult.rows.length === 0) {
+        console.error('Error al obtener tipo de cirugía para cálculo:', err);
+        return res.status(500).json({ error: 'No se pudo encontrar el tipo de cirugía' });
       }
-      // **CAMBIO CLAVE**: Obtener el ID desde result.rows[0].id_cirugia
-      const nuevoId = result.rows[0].id_cirugia;
-      res.status(201).json({ id: nuevoId, ...nuevaCirugia });
+
+      const tipoCirugia = tipoResult.rows[0];
+      const duracionHoras = tipoCirugia.horas || 1; // Duración por defecto de 1 hora
+      const fechaInicio = new Date(nuevaCirugia.fecha_inicio);
+      
+      // Calcular y añadir fecha_fin al objeto
+      const fechaFin = new Date(fechaInicio.getTime() + duracionHoras * 60 * 60 * 1000);
+      nuevaCirugia.fecha_fin = fechaFin.toISOString();
+
+      // Proceder a crear la cirugía con la fecha_fin calculada
+      CirugiaModel.create(nuevaCirugia, (err, result) => {
+        if (err) {
+          console.error('Error al crear cirugía:', err);
+          return res.status(500).json({ error: 'Error al crear cirugía' });
+        }
+        const nuevoId = result.rows[0].id_cirugia;
+        res.status(201).json({ id: nuevoId, ...nuevaCirugia });
+      });
     });
   }
 
   static actualizar(req, res) {
     const id = req.params.id;
     const datos = req.body;
-    // El trigger en la DB se encarga de 'actualizado'
 
-    CirugiaModel.update(id, datos, (err) => {
-      if (err) {
-        console.error('Error al actualizar cirugía:', err);
-        return res.status(500).json({ error: 'Error al actualizar cirugía' });
+    // Obtener la duración para recalcular fecha_fin
+    CirugiaModel.getTipoById(datos.id_tipo_cirugia, (err, tipoResult) => {
+      if (err || tipoResult.rows.length === 0) {
+        console.error('Error al obtener tipo de cirugía para cálculo:', err);
+        return res.status(500).json({ error: 'No se pudo encontrar el tipo de cirugía' });
       }
-      res.json({ id, ...datos });
+      
+      const tipoCirugia = tipoResult.rows[0];
+      const duracionHoras = tipoCirugia.horas || 1;
+      const fechaInicio = new Date(datos.fecha_inicio);
+
+      // Calcular y añadir fecha_fin al objeto de datos a actualizar
+      const fechaFin = new Date(fechaInicio.getTime() + duracionHoras * 60 * 60 * 1000);
+      datos.fecha_fin = fechaFin.toISOString();
+
+      // Proceder a actualizar la cirugía
+      CirugiaModel.update(id, datos, (err) => {
+        if (err) {
+          console.error('Error al actualizar cirugía:', err);
+          return res.status(500).json({ error: 'Error al actualizar cirugía' });
+        }
+        res.json({ id, ...datos });
+      });
     });
   }
 

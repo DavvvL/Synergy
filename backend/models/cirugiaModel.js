@@ -34,6 +34,10 @@ class CirugiaModel {
     db.query('SELECT * FROM cirugias WHERE id_cirugia = $1', [id], callback);
   }
 
+  static getTipoById(id, callback) {
+    db.query('SELECT * FROM tipo_cirugia WHERE id_tipo_cirugia = $1', [id], callback);
+  }
+
   static create(cirugia, callback) {
     const columns = Object.keys(cirugia);
     const values = Object.values(cirugia);

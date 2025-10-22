@@ -2,6 +2,8 @@ require('dotenv').config();
 const cors = require('cors');
 const express = require('express');
 
+const { iniciarPlanificadorDeCirugias } = require('./services/scheduler');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -51,6 +53,11 @@ app.use((req, res) => {
 // Iniciar servidor
 app.listen(port, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${port}`);
+  
+  iniciarPlanificadorDeCirugias();
+  console.log('Planificador de estado de cirugías iniciado.');
 });
+
+
 
 module.exports = app;

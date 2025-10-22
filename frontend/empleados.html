@@ -29,7 +29,7 @@
     }
     .puesto-admin { background: #9b59b6; color: white; }
     .puesto-doctor { background: #3498db; color: white; }
-    .puesto-enfermero { background: #1abc9c; color: white; }
+    .puesto-enfermeroa { background: #1abc9c; color: white; }
   </style>
 </head>
 <body>
@@ -58,7 +58,7 @@
   <div class="container">
     <div class="page-header">
       <h2>👥 Gestión de Empleados</h2>
-      <button class="btn-primary" onclick="mostrarFormularioCrear()">+ Nuevo Empleado</button>
+      <button class="btn-primary" onclick="mostrarModalEmpleado(false)">+ Nuevo Empleado</button>
     </div>
 
     <div class="table-container">
@@ -70,93 +70,85 @@
             <th>Correo</th>
             <th>Puesto</th>
             <th>Turno</th>
-            <th>Teléfono</th>
             <th>Estado</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody id="empleados-tbody">
-          <tr><td colspan="8" class="text-center">Cargando...</td></tr>
+          <tr><td colspan="7" class="text-center">Cargando...</td></tr>
         </tbody>
       </table>
     </div>
-  </div>
 
-  <!-- Modal -->
-  <div id="modal" class="modal">
+    <div id="admin-equipos-section" class="hidden">
+      <hr style="margin: 3rem 0;">
+      <div class="page-header">
+        <h2>🛠️ Gestión de Equipos</h2>
+        <button class="btn-primary" onclick="mostrarModalEquipo(false)">+ Nuevo Equipo</button>
+      </div>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre del Equipo</th>
+              <th>Descripción</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="equipos-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    </div>
+
+  <div id="modal-empleado" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 id="modal-title">Nuevo Empleado</h3>
-        <span class="close" onclick="cerrarModal()">&times;</span>
+        <h3 id="empleado-modal-title">Nuevo Empleado</h3>
+        <span class="close" onclick="cerrarModalEmpleado()">&times;</span>
       </div>
       <div class="modal-body">
         <form id="empleado-form">
           <input type="hidden" id="id_empleado">
-
-          <div class="form-group">
-            <label>Nombre *</label>
-            <input type="text" id="nombre" required maxlength="25">
-          </div>
-
-          <div class="form-group">
-            <label>Apellido Paterno *</label>
-            <input type="text" id="paterno" required maxlength="25">
-          </div>
-
-          <div class="form-group">
-            <label>Apellido Materno *</label>
-            <input type="text" id="materno" required maxlength="25">
-          </div>
-
-          <div class="form-group">
-            <label>Correo *</label>
-            <input type="email" id="correo" required maxlength="40">
-          </div>
-
-          <div class="form-group">
-            <label>Contraseña *</label>
-            <input type="password" id="contraseña" required maxlength="30" 
-                   placeholder="Dejar en blanco para no cambiar">
-          </div>
-
-          <div class="form-group">
-            <label>Puesto *</label>
-            <select id="puesto" required>
-              <option value="">Cargando...</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>Turno *</label>
-            <select id="turno" required>
-              <option value="">Seleccionar...</option>
-              <option value="Matutino">Matutino</option>
-              <option value="Vespertino">Vespertino</option>
-              <option value="Nocturno">Nocturno</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>Teléfono *</label>
-            <input type="tel" id="telefono" required pattern="[0-9]{10}" placeholder="10 dígitos">
-          </div>
-
-          <div class="form-group">
-            <label>Equipo *</label>
-            <select id="id_equipo" required>
-              <option value="">Cargando...</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>
-              <input type="checkbox" id="activo" checked>
-              Activo
-            </label>
-          </div>
-
+          <div class="form-group"><label>Nombre *</label><input type="text" id="nombre" required maxlength="25"></div>
+          <div class="form-group"><label>Apellido Paterno *</label><input type="text" id="paterno" required maxlength="25"></div>
+          <div class="form-group"><label>Apellido Materno *</label><input type="text" id="materno" required maxlength="25"></div>
+          <div class="form-group"><label>Correo *</label><input type="email" id="correo" required maxlength="40"></div>
+          <div class="form-group"><label>Contraseña *</label><input type="password" id="contraseña" required maxlength="30" placeholder="Dejar en blanco para no cambiar"></div>
+          <div class="form-group"><label>Puesto *</label><select id="puesto" required></select></div>
+          <div class="form-group"><label>Turno *</label><select id="turno" required><option value="">Seleccionar...</option><option value="Matutino">Matutino</option><option value="Vespertino">Vespertino</option><option value="Nocturno">Nocturno</option></select></div>
+          <div class="form-group"><label>Teléfono</label><input type="tel" id="telefono" pattern="[0-9]{10}" placeholder="10 dígitos"></div>
+          <div class="form-group"><label>Equipo *</label><select id="id_equipo" required></select></div>
+          <div class="form-group"><label><input type="checkbox" id="activo" checked>Activo</label></div>
           <div class="form-actions">
-            <button type="button" onclick="cerrarModal()">Cancelar</button>
+            <button type="button" onclick="cerrarModalEmpleado()">Cancelar</button>
+            <button type="submit">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-equipo" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 id="equipo-modal-title">Nuevo Equipo</h3>
+        <span class="close" onclick="cerrarModalEquipo()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="equipo-form">
+          <input type="hidden" id="id_equipo_form">
+          <div class="form-group">
+            <label>Nombre del Equipo *</label>
+            <input type="text" id="nombre_equipo_form" required maxlength="20">
+          </div>
+          <div class="form-group">
+            <label>Descripción</label>
+            <textarea id="descripcion_equipo_form" maxlength="50" rows="3"></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" onclick="cerrarModalEquipo()">Cancelar</button>
             <button type="submit">Guardar</button>
           </div>
         </form>
@@ -173,29 +165,91 @@
       alert('Solo los administradores pueden acceder a esta página');
       window.location.href = 'dashboard.html';
     }
-
     PermisosManager.aplicarPermisosNavbar();
     PermisosManager.mostrarInfoUsuario();
 
-    let empleados = [];
-    let puestos = [];
-    let equipos = [];
-    let modoEdicion = false;
+    let empleados = [], puestos = [], equipos = [];
+    let modoEdicionEmpleado = false, modoEdicionEquipo = false;
 
     async function cargarDatos() {
-      await Promise.all([
-        cargarEmpleados(),
-        cargarPuestos(),
-        cargarEquipos()
-      ]);
+      await Promise.all([cargarEmpleados(), cargarPuestos(), cargarEquipos()]);
+      if (PermisosManager.esAdmin()) {
+        document.getElementById('admin-equipos-section').classList.remove('hidden');
+        mostrarEquiposEnTabla();
+      }
     }
-
+    
+    // --- LÓGICA DE EMPLEADOS ---
     async function cargarEmpleados() {
       empleados = await EmpleadosAPI.obtenerTodos();
       if (!empleados) return;
-      mostrarEmpleados();
+      mostrarEmpleadosEnTabla();
+    }
+    
+    function clasePuesto(puesto) {
+        if (!puesto) return '';
+        return `puesto-${puesto.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
     }
 
+    function mostrarEmpleadosEnTabla() {
+      const tbody = document.getElementById('empleados-tbody');
+      tbody.innerHTML = empleados.map(e => `
+        <tr>
+          <td>${e.id_empleado}</td>
+          <td>${e.nombre} ${e.paterno} ${e.materno}</td>
+          <td>${e.correo}</td>
+          <td><span class="puesto-badge ${clasePuesto(e.puesto)}">${e.puesto}</span></td>
+          <td>${e.turno}</td>
+          <td><span class="${e.activo ? 'badge-activo' : 'badge-inactivo'}">${e.activo ? 'Activo' : 'Inactivo'}</span></td>
+          <td>
+            <button class="btn-edit" onclick="mostrarModalEmpleado(true, ${e.id_empleado})">Editar</button>
+            <button class="btn-delete" onclick="eliminarEmpleado(${e.id_empleado})">Eliminar</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+    
+    function mostrarModalEmpleado(esEdicion, id = null) {
+      modoEdicionEmpleado = esEdicion;
+      const form = document.getElementById('empleado-form');
+      form.reset();
+      
+      if (esEdicion) {
+        const empleado = empleados.find(e => e.id_empleado === id);
+        if (!empleado) return;
+        document.getElementById('empleado-modal-title').textContent = 'Editar Empleado';
+        document.getElementById('id_empleado').value = empleado.id_empleado;
+        document.getElementById('nombre').value = empleado.nombre;
+        document.getElementById('paterno').value = empleado.paterno;
+        document.getElementById('materno').value = empleado.materno;
+        document.getElementById('correo').value = empleado.correo;
+        document.getElementById('contraseña').required = false;
+        document.getElementById('puesto').value = empleado.puesto;
+        document.getElementById('turno').value = empleado.turno;
+        document.getElementById('telefono').value = empleado.telefono || '';
+        document.getElementById('id_equipo').value = empleado.id_equipo;
+        document.getElementById('activo').checked = empleado.activo === true;
+      } else {
+        document.getElementById('empleado-modal-title').textContent = 'Nuevo Empleado';
+        document.getElementById('id_empleado').value = '';
+        document.getElementById('contraseña').required = true;
+      }
+      document.getElementById('modal-empleado').style.display = 'block';
+    }
+    
+    function cerrarModalEmpleado() {
+      document.getElementById('modal-empleado').style.display = 'none';
+    }
+    
+    async function eliminarEmpleado(id) {
+      if (!confirm('¿Estás seguro de eliminar este empleado?')) return;
+      const resultado = await EmpleadosAPI.eliminar(id);
+      if (resultado) {
+        alert('Empleado eliminado correctamente');
+        cargarEmpleados();
+      }
+    }
+    
     async function cargarPuestos() {
       puestos = await EmpleadosAPI.obtenerPuestos();
       if (!puestos) return;
@@ -204,6 +258,7 @@
         puestos.map(p => `<option value="${p.puesto}">${p.puesto}</option>`).join('');
     }
 
+    // --- LÓGICA DE EQUIPOS ---
     async function cargarEquipos() {
       equipos = await EmpleadosAPI.obtenerEquipos();
       if (!equipos) return;
@@ -212,113 +267,57 @@
         equipos.map(e => `<option value="${e.id_equipo}">${e.nombre_equipo}</option>`).join('');
     }
 
-    function mostrarEmpleados() {
-      const tbody = document.getElementById('empleados-tbody');
-      
-      if (empleados.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center">No hay empleados registrados</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = empleados.map(e => `
+    function mostrarEquiposEnTabla() {
+      const tbody = document.getElementById('equipos-tbody');
+      tbody.innerHTML = equipos.map(e => `
         <tr>
-          <td>${e.id_empleado}</td>
-          <td>${e.nombre} ${e.paterno} ${e.materno}</td>
-          <td>${e.correo}</td>
-          <td><span class="puesto-badge puesto-${e.puesto}">${e.puesto}</span></td>
-          <td>${e.turno}</td>
-          <td>${e.telefono}</td>
-          <td><span class="${e.activo ? 'badge-activo' : 'badge-inactivo'}">${e.activo ? 'Activo' : 'Inactivo'}</span></td>
+          <td>${e.id_equipo}</td>
+          <td>${e.nombre_equipo}</td>
+          <td>${e.descripcion || 'N/A'}</td>
           <td>
-            <button class="btn-edit" onclick="editarEmpleado(${e.id_empleado})">Editar</button>
-            <button class="btn-delete" onclick="eliminarEmpleado(${e.id_empleado})">Eliminar</button>
+            <button class="btn-edit" onclick="mostrarModalEquipo(true, ${e.id_equipo})">Editar</button>
+            <button class="btn-delete" onclick="eliminarEquipo(${e.id_equipo})">Eliminar</button>
           </td>
         </tr>
       `).join('');
     }
 
-    function clasePuesto(puesto) {
-        if (!puesto) return '';
-        return `puesto-${puesto.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
-    }
-
-    function mostrarEmpleados() {
-      const tbody = document.getElementById('empleados-tbody');
+    function mostrarModalEquipo(esEdicion, id = null) {
+      modoEdicionEquipo = esEdicion;
+      const form = document.getElementById('equipo-form');
+      form.reset();
       
-      if (empleados.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center">No hay empleados registrados</td></tr>';
-        return;
+      if (esEdicion) {
+        const equipo = equipos.find(e => e.id_equipo === id);
+        if (!equipo) return;
+        document.getElementById('equipo-modal-title').textContent = 'Editar Equipo';
+        document.getElementById('id_equipo_form').value = equipo.id_equipo;
+        document.getElementById('nombre_equipo_form').value = equipo.nombre_equipo;
+        document.getElementById('descripcion_equipo_form').value = equipo.descripcion || '';
+      } else {
+        document.getElementById('equipo-modal-title').textContent = 'Nuevo Equipo';
+        document.getElementById('id_equipo_form').value = '';
       }
-
-      tbody.innerHTML = empleados.map(e => `
-        <tr>
-          <td>${e.id_empleado}</td>
-          <td>${e.nombre} ${e.paterno} ${e.materno}</td>
-          <td>${e.correo}</td>
-          <td><span class="puesto-badge ${clasePuesto(e.puesto)}">${e.puesto}</span></td>
-          <td>${e.turno}</td>
-          <td>${e.telefono}</td>
-          <td><span class="${e.activo ? 'badge-activo' : 'badge-inactivo'}">${e.activo ? 'Activo' : 'Inactivo'}</span></td>
-          <td>
-            <button class="btn-edit" onclick="editarEmpleado(${e.id_empleado})">Editar</button>
-            <button class="btn-delete" onclick="eliminarEmpleado(${e.id_empleado})">Eliminar</button>
-          </td>
-        </tr>
-      `).join('');
+      document.getElementById('modal-equipo').style.display = 'block';
     }
 
-    function mostrarFormularioCrear() {
-      modoEdicion = false;
-      document.getElementById('modal-title').textContent = 'Nuevo Empleado';
-      document.getElementById('empleado-form').reset();
-      document.getElementById('id_empleado').value = '';
-      document.getElementById('contraseña').placeholder = '';
-      document.getElementById('contraseña').required = true;
-      document.getElementById('modal').style.display = 'block';
+    function cerrarModalEquipo() {
+      document.getElementById('modal-equipo').style.display = 'none';
     }
 
-    function editarEmpleado(id) {
-      const empleado = empleados.find(e => e.id_empleado == id);
-      if (!empleado) return;
-
-      modoEdicion = true;
-      document.getElementById('modal-title').textContent = 'Editar Empleado';
-      document.getElementById('id_empleado').value = empleado.id_empleado;
-      document.getElementById('nombre').value = empleado.nombre;
-      document.getElementById('paterno').value = empleado.paterno;
-      document.getElementById('materno').value = empleado.materno;
-      document.getElementById('correo').value = empleado.correo;
-      document.getElementById('contraseña').value = '';
-      document.getElementById('contraseña').placeholder = 'Dejar en blanco para no cambiar';
-      document.getElementById('contraseña').required = false;
-      document.getElementById('puesto').value = empleado.puesto;
-      document.getElementById('turno').value = empleado.turno;
-      document.getElementById('telefono').value = empleado.telefono;
-      document.getElementById('id_equipo').value = empleado.id_equipo;
-      document.getElementById('activo').checked = empleado.activo == 1;
-
-      document.getElementById('activo').checked = empleado.activo === true;
-      document.getElementById('modal').style.display = 'block';
-    }
-
-    async function eliminarEmpleado(id) {
-      if (!confirm('¿Estás seguro de eliminar este empleado?')) return;
-
-      const resultado = await EmpleadosAPI.eliminar(id);
+    async function eliminarEquipo(id) {
+      if (!confirm('¿Estás seguro de eliminar este equipo? No se podrá eliminar si hay empleados o cirugías asignadas a él.')) return;
+      const resultado = await EmpleadosAPI.eliminarEquipo(id);
       if (resultado) {
-        alert('Empleado eliminado correctamente');
-        cargarEmpleados();
+        alert('Equipo eliminado correctamente.');
+        await cargarEquipos();
+        mostrarEquiposEnTabla();
       }
     }
-
-    function cerrarModal() {
-      document.getElementById('modal').style.display = 'none';
-      document.getElementById('empleado-form').reset();
-    }
-
+    
+    // --- EVENT LISTENERS ---
     document.getElementById('empleado-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-
       const formData = {
         nombre: document.getElementById('nombre').value,
         paterno: document.getElementById('paterno').value,
@@ -326,38 +325,49 @@
         correo: document.getElementById('correo').value,
         puesto: document.getElementById('puesto').value,
         turno: document.getElementById('turno').value,
-        telefono: document.getElementById('telefono').value, // El backend maneja la conversión
+        telefono: document.getElementById('telefono').value,
         id_equipo: parseInt(document.getElementById('id_equipo').value),
-        // **CAMBIO**: Enviar un booleano en lugar de 1/0
         activo: document.getElementById('activo').checked
       };
-
       const contraseña = document.getElementById('contraseña').value;
-      if (contraseña) {
-        formData.contraseña = contraseña;
-      }
-
+      if (contraseña) formData.contraseña = contraseña;
+      
       let resultado;
-
-      if (modoEdicion) {
+      if (modoEdicionEmpleado) {
         const id = document.getElementById('id_empleado').value;
         resultado = await EmpleadosAPI.actualizar(id, formData);
-        if (resultado) alert('Empleado actualizado correctamente');
+        if (resultado) alert('Empleado actualizado correctamente.');
       } else {
         resultado = await EmpleadosAPI.crear(formData);
-        if (resultado) alert('Empleado creado correctamente');
+        if (resultado) alert('Empleado creado correctamente.');
       }
-
       if (resultado) {
-        cerrarModal();
+        cerrarModalEmpleado();
         cargarEmpleados();
       }
     });
 
-    window.onclick = function(event) {
-      const modal = document.getElementById('modal');
-      if (event.target == modal) cerrarModal();
-    }
+    document.getElementById('equipo-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('id_equipo_form').value;
+      const formData = {
+        nombre_equipo: document.getElementById('nombre_equipo_form').value,
+        descripcion: document.getElementById('descripcion_equipo_form').value || null
+      };
+      let resultado;
+      if (modoEdicionEquipo) {
+        resultado = await EmpleadosAPI.actualizarEquipo(id, formData);
+        if (resultado) alert('Equipo actualizado correctamente.');
+      } else {
+        resultado = await EmpleadosAPI.crearEquipo(formData);
+        if (resultado) alert('Equipo creado correctamente.');
+      }
+      if (resultado) {
+        cerrarModalEquipo();
+        await cargarEquipos();
+        mostrarEquiposEnTabla();
+      }
+    });
 
     cargarDatos();
   </script>

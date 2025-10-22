@@ -39,6 +39,25 @@ class EmpleadoModel {
   static getEquipos(callback) {
     db.query('SELECT id_equipo, nombre_equipo FROM equipos', callback);
   }
+
+  static getEquipos(callback) {
+    db.query('SELECT * FROM equipos ORDER BY nombre_equipo ASC', callback);
+  }
+
+  static crearEquipo(equipo, callback) {
+    const query = 'INSERT INTO equipos (nombre_equipo, descripcion) VALUES ($1, $2) RETURNING id_equipo';
+    db.query(query, [equipo.nombre_equipo, equipo.descripcion], callback);
+  }
+
+  static actualizarEquipo(id, datos, callback) {
+    const query = 'UPDATE equipos SET nombre_equipo = $1, descripcion = $2 WHERE id_equipo = $3';
+    db.query(query, [datos.nombre_equipo, datos.descripcion, id], callback);
+  }
+
+  static eliminarEquipo(id, callback) {
+    db.query('DELETE FROM equipos WHERE id_equipo = $1', [id], callback);
+  }
+
 }
 
 module.exports = EmpleadoModel;

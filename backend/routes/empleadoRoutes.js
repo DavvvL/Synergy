@@ -10,9 +10,12 @@ router.use(verificarAuth);
 // Cualquiera autenticado puede ver puestos y equipos
 router.get('/opciones/puestos', EmpleadoController.obtenerPuestos);
 router.get('/opciones/equipos', EmpleadoController.obtenerEquipos);
+router.post('/equipos', soloAdmin, EmpleadoController.crearEquipo);
+router.put('/equipos/:id', soloAdmin, EmpleadoController.actualizarEquipo);
+router.delete('/equipos/:id', soloAdmin, EmpleadoController.eliminarEquipo);
 
 // CRUD de empleados (solo admin)
-router.get('/', soloAdmin, EmpleadoController.obtenerTodos);
+router.get('/', EmpleadoController.obtenerTodos);
 router.get('/:id', soloAdmin, EmpleadoController.obtenerPorId);
 router.post('/', soloAdmin, EmpleadoController.crear);
 router.put('/:id', soloAdmin, EmpleadoController.actualizar);

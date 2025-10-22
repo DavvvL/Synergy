@@ -98,11 +98,25 @@
     .surgery-block .title { font-weight: bold; }
 
     /* Estilos para el formulario del modal */
-    .step, .view-mode-content, .edit-mode-content { display: none; }
-    .modal.creacion-mode .step { display: block; }
+    .step { display: none; }
+    
+    .view-mode-content, .edit-mode-content, .creacion-mode {
+      display: none;
+    }
+    /* 2. Mostrar solo el contenedor correspondiente al modo del modal */
     .modal.view-mode .view-mode-content { display: block; }
     .modal.edit-mode .edit-mode-content { display: block; }
-    
+    .modal.creacion-mode .creacion-mode { display: block; }
+
+    /* 3. Dentro del modo creación, ocultar los pasos por defecto */
+    .creacion-mode .step {
+      display: none;
+    }
+    /* 4. Mostrar solo el paso que tenga la clase 'active' */
+    .creacion-mode .step.active {
+      display: block;
+    }
+
     #horas-disponibles-container {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
@@ -341,6 +355,8 @@
       </div>
     </div>
   </div>
+
+  
   
   <script src="js/auth.js"></script>
   <script src="js/permisos.js"></script>
@@ -500,6 +516,8 @@
     function cerrarModalCirugia() {
       document.getElementById('modal-cirugia').style.display = 'none';
       cirugiaSeleccionadaId = null;
+      document.getElementById('step1').classList.remove('active');
+      document.getElementById('step2').classList.remove('active');
     }
     
     async function eliminarCirugia(id) {
